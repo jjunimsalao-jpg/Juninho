@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
+<title>Juninho — Mentor Financeiro</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap');
+:root{--bg:#0d1117;--s1:#161b22;--s2:#21262d;--s3:#2d333b;--border:#30363d;--green:#3fb950;--gdim:#1a3a22;--red:#f85149;--rdim:#3a1a1a;--blue:#58a6ff;--yellow:#e3b341;--text:#e6edf3;--dim:#8b949e;--out:#1c4532;--outb:#2d6a4f;--in:#21262d}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{height:100%;height:-webkit-fill-available}
+body{min-height:100%;min-height:-webkit-fill-available;min-height:100dvh;max-height:100dvh;overflow:hidden;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column}
+.header{background:var(--s1);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;gap:11px;flex-shrink:0}
+.avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#3fb950,#238636);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:17px;color:#fff;flex-shrink:0}
+.hinfo h1{font-family:'Syne',sans-serif;font-size:14px;font-weight:700}
+.hinfo p{font-size:11px;color:var(--green)}
+.hbts{margin-left:auto;display:flex;gap:6px}
+.hbt{background:var(--s2);border:1px solid var(--border);color:var(--dim);padding:5px 10px;border-radius:8px;font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s}
+.hbt:hover{border-color:var(--green);color:var(--green)}
+.dash{background:var(--s1);border-bottom:1px solid var(--border);padding:8px 14px;display:flex;gap:8px;flex-shrink:0;overflow-x:auto}
+.dash::-webkit-scrollbar{display:none}
+.card{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:7px 12px;min-width:100px;flex-shrink:0}
+.cl{font-size:10px;color:var(--dim);margin-bottom:2px;text-transform:uppercase;letter-spacing:.4px}
+.cv{font-family:'Syne',sans-serif;font-size:14px;font-weight:700}
+.cg{color:var(--green)}.cr{color:var(--red)}.cb{color:var(--blue)}.cy{color:var(--yellow)}
+.metabar{background:var(--s1);border-bottom:1px solid var(--border);padding:6px 14px;display:flex;align-items:center;gap:9px;flex-shrink:0}
+.metabar span{font-size:11px;color:var(--dim);white-space:nowrap}
+.pbar{flex:1;background:var(--s2);border-radius:20px;height:5px;overflow:hidden}
+.pfill{height:100%;border-radius:20px;background:var(--green);transition:width .5s}
+.pfill.w{background:var(--yellow)}.pfill.d{background:var(--red)}
+.ppct{font-size:11px;font-weight:600;white-space:nowrap}
+.hints{display:flex;gap:6px;padding:6px 14px;flex-shrink:0;overflow-x:auto}
+.hints::-webkit-scrollbar{display:none}
+.hint{background:var(--s2);border:1px solid var(--border);border-radius:20px;padding:4px 10px;font-size:11px;color:var(--dim);cursor:pointer;transition:all .2s;white-space:nowrap}
+.hint:hover{border-color:var(--green);color:var(--green)}
+.chat{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 14px;display:flex;flex-direction:column;gap:6px;scroll-behavior:smooth;min-height:0}
+.chat::-webkit-scrollbar{width:3px}
+.chat::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.msg{display:flex;flex-direction:column;max-width:87%;animation:pop .2s ease}
+@keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.msg.out{align-self:flex-end;align-items:flex-end}
+.msg.in{align-self:flex-start;align-items:flex-start}
+.bubble{padding:10px 13px;border-radius:16px;font-size:14px;line-height:1.6;white-space:pre-wrap;word-break:break-word}
+.msg.out .bubble{background:var(--out);border:1px solid var(--outb);border-bottom-right-radius:4px;color:#b7e4c7}
+.msg.in .bubble{background:var(--in);border:1px solid var(--border);border-bottom-left-radius:4px;color:var(--text)}
+.msender{font-size:11px;color:var(--green);font-weight:600;margin-bottom:2px;padding:0 3px}
+.mtime{font-size:10px;color:var(--dim);margin-top:2px;padding:0 3px}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;margin-top:4px}
+.badge.entrada{background:var(--gdim);color:var(--green);border:1px solid #2d6a4f}
+.badge.gasto{background:var(--rdim);color:var(--red);border:1px solid #6a2d2d}
+.badge.fix{background:#1a1a2e;color:var(--blue);border:1px solid #1e3a5f}
+.badge.cancel{background:#1a1a1a;color:var(--dim);border:1px solid var(--border)}
+.typing{display:flex;align-items:center;gap:4px;padding:10px 14px;background:var(--in);border:1px solid var(--border);border-radius:16px;border-bottom-left-radius:4px;width:fit-content}
+.typing span{width:6px;height:6px;border-radius:50%;background:var(--dim);animation:tdot 1.2s infinite}
+.typing span:nth-child(2){animation-delay:.2s}.typing span:nth-child(3){animation-delay:.4s}
+@keyframes tdot{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
+.inputarea{background:var(--s1);border-top:1px solid var(--border);padding:10px 12px;padding-bottom:max(10px,env(safe-area-inset-bottom));display:flex;gap:8px;align-items:flex-end;flex-shrink:0;position:sticky;bottom:0;z-index:10}
+.voice-ov{display:none;position:absolute;top:0;left:0;right:0;bottom:0;background:var(--s1);border-top:2px solid var(--red);align-items:center;justify-content:center;gap:10px;font-size:13px;color:var(--red);font-weight:600;z-index:5}
+.voice-ov.on{display:flex}
+.vdot{width:10px;height:10px;border-radius:50%;background:var(--red);animation:vp 1s infinite}
+@keyframes vp{0%,100%{transform:scale(1)}50%{transform:scale(1.4);opacity:.6}}
+.inputwrap{flex:1;background:#f3f4f6;border:2px solid #d1d5db;border-radius:24px;display:flex;align-items:center;padding:9px 14px;gap:6px;transition:all .2s}
+.inputwrap:focus-within{border-color:var(--green);background:#fff;box-shadow:0 0 0 3px rgba(63,185,80,.15)}
+textarea{flex:1;background:none;border:none;outline:none;color:#111827;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;resize:none;max-height:90px;overflow-y:auto;line-height:1.5;caret-color:#3fb950}
+textarea::placeholder{color:#9ca3af;font-weight:400}
+.micbtn{width:42px;height:42px;border-radius:50%;background:var(--s2);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+.micbtn svg{width:20px;height:20px;fill:var(--dim)}
+.micbtn.rec{background:var(--rdim);border-color:var(--red);animation:pm 1s infinite}
+.micbtn.rec svg{fill:var(--red)}
+@keyframes pm{0%,100%{box-shadow:0 0 0 0 rgba(248,81,73,.4)}50%{box-shadow:0 0 0 8px rgba(248,81,73,0)}}
+.sendbtn{width:42px;height:42px;border-radius:50%;background:var(--green);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+.sendbtn:hover{background:#2ea043;transform:scale(1.05)}.sendbtn:active{transform:scale(.95)}
+.sendbtn svg{width:19px;height:19px;fill:white}
+.mbg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:100;align-items:center;justify-content:center;padding:16px}
+.mbg.open{display:flex}
+.mbox{background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:20px;width:100%;max-width:420px;max-height:84vh;overflow-y:auto}
+.mbox h2{font-family:'Syne',sans-serif;font-size:17px;margin-bottom:14px}
+.titem{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:10px;margin-bottom:6px;border:1px solid var(--border);background:var(--s2);gap:8px}
+.titem.off{opacity:.35}
+.tdesc{font-size:13px}.tmeta{font-size:10px;color:var(--dim);margin-top:2px}
+.tcat{font-size:10px;background:var(--s1);border:1px solid var(--border);padding:2px 6px;border-radius:8px;color:var(--dim);margin-top:3px;display:inline-block}
+.tamt{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;text-align:right}
+.tamt.p{color:var(--green)}.tamt.n{color:var(--red)}
+.tdel{background:none;border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:11px;color:var(--red);cursor:pointer;flex-shrink:0}
+.cbtn{width:100%;margin-top:10px;padding:10px;background:var(--s2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;transition:all .2s}
+.cbtn:hover{border-color:var(--green);color:var(--green)}
+.stitle{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;margin:12px 0 6px}
+.row{display:flex;gap:6px;margin-bottom:8px}
+.row input{flex:1;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none}
+.row input:focus{border-color:var(--green)}
+.row input::placeholder{color:var(--dim)}
+.row button{background:var(--green);border:none;border-radius:8px;padding:8px 14px;color:white;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;white-space:nowrap}
+.toast{position:fixed;bottom:76px;left:50%;transform:translateX(-50%) translateY(12px);background:var(--s2);border:1px solid var(--green);color:var(--green);padding:7px 16px;border-radius:20px;font-size:13px;opacity:0;transition:all .3s;z-index:200;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.divider{text-align:center;font-size:11px;color:var(--dim);padding:5px 0;position:relative}
+.divider::before,.divider::after{content:'';position:absolute;top:50%;width:28%;height:1px;background:var(--border)}
+.divider::before{left:0}.divider::after{right:0}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="avatar">J</div>
+  <div class="hinfo"><h1 id="nome-h">Juninho — Mentor Financeiro</h1><p>● online — 100% offline</p></div>
+  <div class="hbts">
+    <button class="hbt" onclick="abrirModal('extrato')">📋 Extrato</button>
+    <button class="hbt" onclick="abrirModal('config')">⚙️</button>
+  </div>
+</div>
+<div class="dash">
+  <div class="card"><div class="cl">💰 Entradas</div><div class="cv cg" id="d-ent">R$ 0,00</div></div>
+  <div class="card"><div class="cl">💸 Gastos</div><div class="cv cr" id="d-gas">R$ 0,00</div></div>
+  <div class="card"><div class="cl">📊 Saldo Mês</div><div class="cv cb" id="d-sal">R$ 0,00</div></div>
+  <div class="card"><div class="cl">📅 Hoje</div><div class="cv cy" id="d-hoj">R$ 0,00</div></div>
+  <div class="card"><div class="cl">💡 Limite/dia</div><div class="cv" id="d-lim" style="color:var(--dim)">—</div></div>
+  <div class="card"><div class="cl">📉 Economia</div><div class="cv" id="d-eco" style="color:var(--dim)">—</div></div>
+</div>
+<div class="metabar">
+  <span id="meta-txt">Meta: não definida</span>
+  <div class="pbar"><div class="pfill" id="pbar" style="width:0%"></div></div>
+  <span class="ppct" id="ppct" style="color:var(--dim)">—</span>
+</div>
+<div class="hints">
+  <div class="hint" onclick="hint(this)">Fiz um corte</div>
+  <div class="hint" onclick="hint(this)">Fiz uma barba</div>
+  <div class="hint" onclick="hint(this)">Fiz progressiva</div>
+  <div class="hint" onclick="hint(this)">Gastei R$</div>
+  <div class="hint" onclick="hint(this)">Como estou?</div>
+  <div class="hint" onclick="hint(this)">Resumo</div>
+  <div class="hint" onclick="hint(this)">Relatório mês</div>
+  <div class="hint" onclick="hint(this)">Tabela de preços</div>
+  <div class="hint" onclick="hint(this)">Dica de economia</div>
+  <div class="hint" onclick="hint(this)">Cancela o último</div>
+</div>
+<div class="chat" id="chat"></div>
+<div class="inputarea">
+  <div class="voice-ov" id="vov"><div class="vdot"></div><span id="vlbl">🎙️ Gravando... toque para parar</span></div>
+  <button class="micbtn" id="micbtn" onclick="toggleMic()">
+    <svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1-9c0-.55.45-1 1-1s1 .45 1 1v6c0 .55-.45 1-1 1s-1-.45-1-1V5zm6 6c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
+  </button>
+  <div class="inputwrap">
+    <textarea id="txt" placeholder="Ex: Fiz um corte, Gastei R$20..." rows="1" onkeydown="onKey(event)" oninput="grow(this)"></textarea>
+  </div>
+  <button class="sendbtn" onclick="enviar()">
+    <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+  </button>
+</div>
+<div class="mbg" id="modal" onclick="if(event.target===this)fecharModal()"><div class="mbox" id="modal-body"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ════════════════════════════════
+// BANCO DE DADOS
+// ════════════════════════════════
+const DB_KEY = 'juninho_premium_v1';
+let DB = (()=>{
+  try {
+    const d = JSON.parse(localStorage.getItem(DB_KEY)||'{}');
+    return {
+      transacoes: d.transacoes||[],
+      historico:  d.historico||[],
+      meta:       d.meta||0,
+      config:     d.config||{nome:'Juninho',profissao:'Barbeiro',autoenvio:true}
+    };
+  } catch(e) {
+    return {transacoes:[],historico:[],meta:0,config:{nome:'Juninho',profissao:'Barbeiro',autoenvio:true}};
+  }
+})();
+
+function dbSave(){ localStorage.setItem(DB_KEY, JSON.stringify(DB)); }
+
+// ════════════════════════════════
+// TABELA DE SERVIÇOS DA BARBEARIA
+// ════════════════════════════════
+const SERVICOS = [
+  { chaves:['corte e barba','corte+barba','combo'],          nome:'Corte + Barba',  valor:65 },
+  { chaves:['corte de cabelo','corte cabelo','corte'],        nome:'Corte',          valor:35 },
+  { chaves:['barba'],                                          nome:'Barba',          valor:30 },
+  { chaves:['alisamento','alisar'],                            nome:'Alisamento',     valor:35 },
+  { chaves:['tintura','tingir','pintura cabelo'],              nome:'Tintura',        valor:35 },
+  { chaves:['luzes','mecha','mechas'],                         nome:'Luzes',          valor:65 },
+  { chaves:['progressiva','escova progressiva'],               nome:'Progressiva',    valor:65 },
+  { chaves:['pezinho','pé','pe ','pezin'],                     nome:'Pezinho',        valor:20 },
+  { chaves:['sobrancelha','sombrancelha','design sobrancelha'],nome:'Sobrancelha',    valor:20 },
+];
+
+// Palavras que indicam que o cliente fez um serviço
+const GATILHOS_SERVICO = ['fiz','fiz um','fiz uma','fiz o','fiz a','fiz dois','fiz 2','fiz 3','fiz três','fiz tres','fiz quatro','fiz 4','fiz cinco','fiz 5','atendi','cliente veio','cliente fez','cobrei','fiz hoje','fiz agora','terminei','acabei de fazer','acabei de atender'];
+
+// Números por extenso
+const NUMEROS = {'um':1,'uma':1,'dois':2,'duas':2,'três':3,'tres':3,'quatro':4,'cinco':5,'seis':6,'sete':7,'oito':8,'nove':9,'dez':10};
+
+function detectarServico(lower) {
+  // Verifica quantidade numérica
+  const mNum = lower.match(/(\d+)\s*x?\s*(corte|barba|alisamento|tintura|luzes|progressiva|pezinho|sobrancelha|sombrancelha|combo)/);
+  let qtd = 1;
+  if (mNum) qtd = parseInt(mNum[1]);
+  else {
+    for (const [palavra, numero] of Object.entries(NUMEROS)) {
+      if (lower.includes(palavra + ' ')) { qtd = numero; break; }
+    }
+  }
+
+  for (const serv of SERVICOS) {
+    for (const chave of serv.chaves) {
+      if (lower.includes(chave)) {
+        return { ...serv, qtd, total: serv.valor * qtd };
+      }
+    }
+  }
+  return null;
+}
+
+// ════════════════════════════════
+// CATEGORIAS DE GASTOS
+// ════════════════════════════════
+function detectarCategoriaGasto(lower) {
+  if (/mercado|super|feira|comida|lanche|restaurante|ifood|pizza|hamburguer|marmita|açougue|acougue|padaria|café|cafe|salgado|almoço|almoco|janta|jantar/.test(lower)) return 'Alimentação';
+  if (/uber|ônibus|onibus|gasolina|combustível|combustivel|transporte|moto|carro|estacionamento|pedágio|pedagio|passagem/.test(lower)) return 'Transporte';
+  if (/conta|luz|água|agua|aluguel|internet|telefone|condominio|condomínio|gás|gas|energia/.test(lower)) return 'Moradia';
+  if (/farmácia|farmacia|remédio|remedio|médico|medico|consulta|saúde|saude|dentista|hospital|exame/.test(lower)) return 'Saúde';
+  if (/academia|cinema|jogo|entretenimento|lazer|netflix|spotify|show|festa|balada/.test(lower)) return 'Lazer';
+  if (/produto|pomada|shampoo|navalha|lâmina|lamina|tesoura|máquina|maquina|material|insumo|estoque/.test(lower)) return 'Material Barbearia';
+  if (/escola|faculdade|curso|livro|estudo|educação|educacao/.test(lower)) return 'Educação';
+  if (/roupa|calçado|calcado|sapato|tênis|tenis|bermuda|camisa|uniforme/.test(lower)) return 'Vestuário';
+  if (/poupança|poupanca|investimento|reserva|guardei|poupar/.test(lower)) return 'Investimento';
+  if (/parcela|prestação|prestacao|empréstimo|emprestimo|dívida|divida|financiamento/.test(lower)) return 'Dívidas';
+  return 'Outros';
+}
+
+// ════════════════════════════════
+// UTILITÁRIOS
+// ════════════════════════════════
+const fmt   = v => 'R$ ' + Math.abs(v).toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+const hoje  = () => new Date().toLocaleDateString('pt-BR');
+const hora  = () => new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+const now   = () => new Date().toLocaleString('pt-BR');
+const dp    = () => new Date().getDate();
+const dr    = () => { const d=new Date(); return new Date(d.getFullYear(),d.getMonth()+1,0).getDate()-d.getDate()+1; };
+
+function extrairValor(txt) {
+  const m = txt.match(/r\$\s*(\d+(?:[.,]\d{1,2})?)|(\d+(?:[.,]\d{1,2})?)\s*(?:reais|real)/i);
+  if (m) return parseFloat((m[1]||m[2]).replace(',','.'));
+  const m2 = txt.match(/(\d+(?:[.,]\d{1,2})?)/);
+  return m2 ? parseFloat(m2[1].replace(',','.')) : 0;
+}
+
+// ════════════════════════════════
+// CÁLCULOS
+// ════════════════════════════════
+function calc() {
+  const n = new Date();
+  const ativas = DB.transacoes.filter(t=>!t.cancelada);
+  const doMes  = t => { const d=new Date(t.ts); return d.getMonth()===n.getMonth()&&d.getFullYear()===n.getFullYear(); };
+  const deHoje = t => t.data===hoje();
+  const soma   = (arr,tipo) => arr.filter(t=>t.tipo===tipo).reduce((s,t)=>s+t.valor,0);
+  const mes=ativas.filter(doMes), hj=ativas.filter(deHoje);
+  const eM=soma(mes,'entrada'), gM=soma(mes,'gasto'), sM=eM-gM;
+  const eH=soma(hj,'entrada'),  gH=soma(hj,'gasto'),  sH=eH-gH;
+  const _dp=dp(), _dr=dr();
+  const mediaG=_dp>0?gM/_dp:0, mediaE=_dp>0?eM/_dp:0;
+  const taxaEco=eM>0?((eM-gM)/eM*100):0;
+  const limDia=DB.meta>0?Math.max(0,(DB.meta-sM))/_dr:null;
+  // Serviços do dia
+  const servDia = hj.filter(t=>t.tipo==='entrada'&&t.categoria==='Trabalho');
+  const totalServDia = servDia.reduce((s,t)=>s+t.valor,0);
+  return {eM,gM,sM,eH,gH,sH,dp:_dp,dr:_dr,mediaG,mediaE,taxaEco,limDia,totalServDia,servDia};
+}
+
+// ════════════════════════════════
+// PAINEL
+// ════════════════════════════════
+function painel() {
+  const c=calc();
+  document.getElementById('d-ent').textContent=fmt(c.eM);
+  document.getElementById('d-gas').textContent=fmt(c.gM);
+  const sEl=document.getElementById('d-sal'); sEl.textContent=fmt(c.sM); sEl.className='cv '+(c.sM>=0?'cb':'cr');
+  const hEl=document.getElementById('d-hoj'); hEl.textContent=fmt(c.sH); hEl.className='cv '+(c.sH>=0?'cy':'cr');
+  const lEl=document.getElementById('d-lim');
+  if(c.limDia!==null){lEl.textContent=fmt(c.limDia);lEl.style.color=c.limDia<30?'var(--red)':'var(--green)';}
+  else{lEl.textContent='—';lEl.style.color='var(--dim)';}
+  const eEl=document.getElementById('d-eco'); eEl.textContent=c.taxaEco.toFixed(0)+'%';
+  eEl.style.color=c.taxaEco>=30?'var(--green)':c.taxaEco>=0?'var(--yellow)':'var(--red)';
+  if(DB.meta>0){
+    const pct=Math.min(100,Math.max(0,(c.sM/DB.meta)*100));
+    document.getElementById('meta-txt').textContent='Meta: '+fmt(DB.meta);
+    document.getElementById('pbar').style.width=pct+'%';
+    document.getElementById('pbar').className='pfill'+(pct>=80?'':pct>=40?' w':' d');
+    const pp=document.getElementById('ppct'); pp.textContent=pct.toFixed(0)+'%';
+    pp.style.color=pct>=80?'var(--green)':pct>=40?'var(--yellow)':'var(--red)';
+  } else {
+    document.getElementById('meta-txt').textContent='Meta: não definida';
+    document.getElementById('pbar').style.width='0%';
+    document.getElementById('ppct').textContent='—';
+    document.getElementById('ppct').style.color='var(--dim)';
+  }
+}
+
+// ════════════════════════════════
+// CHAT
+// ════════════════════════════════
+function addMsg(text,tipo,badge,save=true){
+  const chat=document.getElementById('chat');
+  const div=document.createElement('div'); div.className='msg '+tipo;
+  const nome=DB.config.nome||'Juninho';
+  let html='';
+  if(tipo==='in') html+='<div class="msender">'+nome+'</div>';
+  html+='<div class="bubble">'+text+'</div>';
+  if(badge){
+    const labels={entrada:'↑ ENTRADA',gasto:'↓ GASTO',fix:'✏️ CORRIGIDO',cancel:'✕ CANCELADO'};
+    html+='<div class="badge '+badge.tipo+'">'+(labels[badge.tipo]||'')+' '+fmt(badge.valor)+'</div>';
+  }
+  html+='<div class="mtime">'+hora()+'</div>';
+  div.innerHTML=html; chat.appendChild(div); chat.scrollTop=chat.scrollHeight;
+  if(save){
+    DB.historico.push({text,tipo,badge,ts:Date.now()});
+    if(DB.historico.length>400) DB.historico=DB.historico.slice(-400);
+    dbSave();
+  }
+}
+
+function showTyping(){
+  const chat=document.getElementById('chat');
+  const d=document.createElement('div'); d.className='msg in'; d.id='tdot';
+  d.innerHTML='<div class="typing"><span></span><span></span><span></span></div>';
+  chat.appendChild(d); chat.scrollTop=chat.scrollHeight;
+}
+function hideTyping(){ document.getElementById('tdot')?.remove(); }
+
+function loadHist(){
+  if(!DB.historico.length) return false;
+  DB.historico.forEach(m=>addMsg(m.text,m.tipo,m.badge,false));
+  const d=document.createElement('div'); d.className='divider'; d.textContent='Agora';
+  document.getElementById('chat').appendChild(d);
+  return true;
+}
+
+// ════════════════════════════════
+// OPERAÇÕES NO BANCO
+// ════════════════════════════════
+function ultimaAtiva(){
+  for(let i=DB.transacoes.length-1;i>=0;i--){
+    if(!DB.transacoes[i].cancelada) return DB.transacoes[i];
+  }
+  return null;
+}
+
+function dbReg(tipo,valor,desc,cat){
+  const t={id:Date.now(),tipo,valor,descricao:desc,categoria:cat||'Outros',data:hoje(),hora:hora(),ts:Date.now(),cancelada:false};
+  DB.transacoes.push(t); dbSave(); painel(); return t;
+}
+function dbCancel(id){
+  const t=id?DB.transacoes.find(x=>x.id===id):ultimaAtiva();
+  if(!t||t.cancelada) return null;
+  t.cancelada=true; dbSave(); painel(); return t;
+}
+function dbFix(id,nv){
+  const t=id?DB.transacoes.find(x=>x.id===id&&!x.cancelada):ultimaAtiva();
+  if(!t) return null;
+  t.valor=nv; dbSave(); painel(); return t;
+}
+
+// ════════════════════════════════
+// INTELIGÊNCIA OFFLINE — MOTOR COMPLETO
+// ════════════════════════════════
+function responder(msg) {
+  const lower = msg.toLowerCase().trim();
+  const valor = extrairValor(msg);
+  const c = calc();
+  const nome = DB.config.nome||'Juninho';
+
+  // ── SAUDAÇÕES ──
+  if (/^(oi|olá|ola|hey|e ai|eai|opa|salve|bom dia|boa tarde|boa noite|tudo bem|tudo bom|como vai|alô|alo|hello|hi)[\s!?]*$/.test(lower)) {
+    const saud = lower.includes('bom dia')?'Bom dia':lower.includes('boa tarde')?'Boa tarde':lower.includes('boa noite')?'Boa noite':'Olá';
+    let sit = '';
+    if(c.sM>0) sit = `Seu saldo do mês está em ${fmt(c.sM)} ✅`;
+    else if(c.eM===0) sit = 'Você ainda não registrou nenhuma movimentação hoje.';
+    else sit = `Atenção: gastos (${fmt(c.gM)}) maiores que entradas (${fmt(c.eM)}) ⚠️`;
+    return {texto:`${saud}! 👋 Que bom te ver aqui!\n\n${sit}\n\nPosso te ajudar com:\n✂️ "Fiz um corte" → registro automático\n💰 "Ganhei R$X" → entrada manual\n💸 "Gastei R$X" → gasto manual\n📊 "Como estou?" → análise completa\n📋 "Tabela de preços" → ver serviços`,badge:null};
+  }
+
+  // ── AGRADECIMENTO ──
+  if (/obrigad|valeu|vlw|tmj|thanks|grato|boa!|boa!!/.test(lower)) {
+    return {texto:'De nada! 😊 Aqui pra te ajudar sempre!\n\nQuer registrar algo ou precisa de uma dica?',badge:null};
+  }
+
+  // ── AJUDA / COMANDOS ──
+  if (/ajuda|help|o que (você|voce) faz|comandos|como (uso|funciona)|menu/.test(lower)||lower==='?') {
+    return {texto:`📱 Tudo que eu sei fazer:\n\n✂️ SERVIÇOS DA BARBEARIA\n"Fiz um corte" → R$ 35\n"Fiz uma barba" → R$ 30\n"Fiz progressiva" → R$ 65\n"Fiz 3 cortes" → R$ 105\n"Fiz corte e barba" → R$ 65\n\n💰 ENTRADAS MANUAIS\n"Ganhei R$X", "Recebi R$X"\n\n💸 GASTOS\n"Gastei R$X no mercado"\n"Paguei R$X de aluguel"\n\n📊 CONSULTAS\n"Como estou?" • "Resumo"\n"Relatório mês" • "Quanto tenho?"\n"Quanto posso gastar?"\n\n✏️ CORREÇÕES\n"Cancela o último"\n"Corrige para R$X"\n\n🎯 METAS E DICAS\n"Meta do mês é R$X"\n"Dica de economia"\n"Ideias para ganhar mais"\n"Plano de economia"\n"Tabela de preços"`,badge:null};
+  }
+
+  // ── TABELA DE PREÇOS ──
+  if (/tabela|preço|preco|quanto custa|valor do|valor da|serviços|servicos|cardápio|cardapio/.test(lower)) {
+    return {texto:`✂️ Tabela de Serviços:\n\nCorte ............... R$ 35,00\nBarba ............... R$ 30,00\nCorte + Barba ....... R$ 65,00\nAlis. / Tintura ..... R$ 35,00\nLuzes ............... R$ 65,00\nProgressiva ......... R$ 65,00\nPezinho ............. R$ 20,00\nSobrancelha ......... R$ 20,00\n\n💡 Como registrar:\n"Fiz um corte" → R$ 35 automático\n"Fiz 3 barba" → R$ 90 automático\n"Fiz luzes" → R$ 65 automático`,badge:null};
+  }
+
+  // ── CANCELAR ──
+  if (/cancela|apaga|era teste|fictí|ficticio|desfaz|remove|não era|nao era|engano|errei/.test(lower)) {
+    const t=dbCancel(null);
+    if(t){const nc=calc();return{texto:`✕ Cancelado!\n\n💰 ${t.tipo==='entrada'?'Entrada':'Gasto'}: ${fmt(t.valor)}\n📝 ${t.descricao}\n\n📊 Saldo hoje: ${fmt(nc.sH)}\n📈 Saldo mês: ${fmt(nc.sM)}`,badge:{tipo:'cancel',valor:t.valor}};}
+    return {texto:'Não encontrei nenhuma transação para cancelar. 🤔',badge:null};
+  }
+
+  // ── CORRIGIR ──
+  if (/corrige|corrigir|era r|o certo|muda para|altera para|valor certo|foi r\$|na verdade/.test(lower) && valor>0) {
+    const t=dbFix(null,valor);
+    if(t){const nc=calc();return{texto:`✏️ Corrigido!\n\n💵 Novo valor: ${fmt(valor)}\n📝 ${t.descricao}\n\n📊 Saldo hoje: ${fmt(nc.sH)}\n📈 Saldo mês: ${fmt(nc.sM)}`,badge:{tipo:'fix',valor}};}
+    return {texto:'Não encontrei transação para corrigir. 🤔',badge:null};
+  }
+
+  // ── META ──
+  if (/meta (do m[eê]s|mensal)|quero guardar|objetivo do m[eê]s/.test(lower) && valor>0) {
+    DB.meta=valor; dbSave(); painel();
+    const c2=calc();
+    return {texto:`🎯 Meta definida: ${fmt(valor)} para o mês!\n\nCom ${c2.dr} dias restantes:\n💡 Limite de gastos: ${fmt(c2.limDia||0)}/dia\n📈 Saldo atual: ${fmt(c2.sM)}\n\nVou monitorar tudo por você! 💪`,badge:null};
+  }
+
+  // ── SERVIÇOS DA BARBEARIA ──
+  const temGatilho = GATILHOS_SERVICO.some(g=>lower.includes(g));
+  const serv = detectarServico(lower);
+  if (serv && (temGatilho || !valor)) {
+    dbReg('entrada', serv.total, serv.qtd>1?`${serv.qtd}x ${serv.nome}`:serv.nome, 'Trabalho');
+    const nc=calc();
+    const qtdTxt = serv.qtd>1?` (${serv.qtd}x ${fmt(serv.valor)})`:' ';
+    const motivacao = nc.eM<100?'Primeiro serviço do dia! Bora chegar nos 100! 💪':nc.eM<300?'Indo bem! Cada atendimento conta! ✂️':nc.eM<500?'Ótimo movimento! Você está arrasando! 🔥':'Dia produtivo! Você está no caminho certo! 🏆';
+    return {
+      texto:`💰 Serviço Registrado!\n\n✂️ ${serv.qtd>1?serv.qtd+'x ':''} ${serv.nome}\n💵 Valor: ${fmt(serv.total)}${qtdTxt}\n📅 ${now()}\n\n📊 Saldo hoje: ${fmt(nc.sH)}\n📈 Saldo mês: ${fmt(nc.sM)}\n💰 Total serviços hoje: ${fmt(nc.totalServDia)}${DB.meta>0?'\n🎯 Meta: '+Math.min(100,Math.round(nc.sM/DB.meta*100))+'% atingida':''}\n\n${motivacao}`,
+      badge:{tipo:'entrada',valor:serv.total}
+    };
+  }
+
+  // ── ENTRADAS MANUAIS ──
+  const palavrasEntrada = ['recebi','ganhei','entrou','entrei','salário','salario','pix recebi','vendi','venda','pagaram','depositou','freelance','renda','me pagaram','me mandaram','caiu','transferência','transferencia'];
+  if (valor>0 && palavrasEntrada.some(p=>lower.includes(p))) {
+    let cat = 'Outros';
+    if (/salár|salario|salario/.test(lower)) cat='Salário';
+    else if (/vend|serviço|servico|trabalho|barbearia/.test(lower)) cat='Trabalho';
+    else if (/aluguel|rent/.test(lower)) cat='Aluguel Recebido';
+    else if (/pix|transfer/.test(lower)) cat='Transferência';
+    dbReg('entrada',valor,msg,cat);
+    const nc=calc();
+    return {
+      texto:`💰 Entrada Registrada!\n\n📂 Categoria: ${cat}\n💵 Valor: ${fmt(valor)}\n📅 ${now()}\n\n📊 Saldo hoje: ${fmt(nc.sH)}\n📈 Saldo mês: ${fmt(nc.sM)}${DB.meta>0?'\n🎯 Meta: '+Math.min(100,Math.round(nc.sM/DB.meta*100))+'% atingida':''}\n\n${nc.taxaEco>=20?'Ótimo! Tente guardar pelo menos 20% dessa entrada! 💪':'Continue registrando tudo! 📝'}`,
+      badge:{tipo:'entrada',valor}
+    };
+  }
+
+  // ── GASTOS ──
+  const palavrasGasto = ['gastei','paguei','saiu','gasei','comprei','devo','despesa','sai','sai do bolso','custou','cobrou'];
+  if (valor>0 && (palavrasGasto.some(p=>lower.includes(p)) || lower.includes('gastei'))) {
+    const cat = detectarCategoriaGasto(lower);
+    dbReg('gasto',valor,msg,cat);
+    const nc=calc();
+    const alertaLimite = nc.limDia!==null&&nc.gH>nc.limDia?`\n\n⚠️ Você passou do limite diário de ${fmt(nc.limDia)}! Tente compensar amanhã.`:'';
+    return {
+      texto:`💸 Gasto Registrado!\n\n📂 Categoria: ${cat}\n💵 Valor: ${fmt(valor)}\n📅 ${now()}\n\n📊 Saldo hoje: ${fmt(nc.sH)}\n📈 Saldo mês: ${fmt(nc.sM)}${alertaLimite}\n\n💡 ${nc.gM>nc.eM?'Seus gastos já superaram as entradas! Cuidado! 🚨':'Registrado! Fique de olho nos gastos. 👀'}`,
+      badge:{tipo:'gasto',valor}
+    };
+  }
+
+  // ── VALOR SOLTO (sem palavra-chave — pergunta o tipo) ──
+  if (valor>0 && !serv) {
+    return {texto:`Vi que você digitou ${fmt(valor)}. 💭\n\nFoi uma entrada ou gasto?\n\nExemplos:\n✅ "Ganhei ${fmt(valor)}"\n✅ "Recebi ${fmt(valor)}"\n❌ "Gastei ${fmt(valor)}"\n❌ "Paguei ${fmt(valor)} de aluguel"\n\nOu se foi um serviço:\n✂️ "Fiz um corte" (R$35)\n✂️ "Fiz uma barba" (R$30)`,badge:null};
+  }
+
+  // ── CONSULTAS ──
+  if (/como estou|minha situa|meu financeiro|situação|situacao|análise|analise|ver tudo/.test(lower)) {
+    const nc=calc();
+    const top3g = DB.transacoes.filter(t=>!t.cancelada&&t.tipo==='gasto').sort((a,b)=>b.valor-a.valor).slice(0,3);
+    const top3txt = top3g.length?top3g.map((t,i)=>`  ${i+1}. ${t.descricao}: ${fmt(t.valor)}`).join('\n'):'  Nenhum gasto ainda';
+    return {texto:`📊 Sua situação completa:\n\n💰 Entradas: ${fmt(nc.eM)}\n💸 Gastos: ${fmt(nc.gM)}\n📈 Saldo mês: ${fmt(nc.sM)}\n📅 Saldo hoje: ${fmt(nc.sH)}\n📉 Taxa economia: ${nc.taxaEco.toFixed(0)}%\n✂️ Serviços hoje: ${fmt(nc.totalServDia)}${DB.meta>0?`\n\n🎯 Meta: ${fmt(DB.meta)}\n📊 Progresso: ${Math.min(100,Math.round(nc.sM/DB.meta*100))}%\n💡 Limite/dia: ${fmt(nc.limDia||0)}`:''}\n\n📂 Maiores gastos:\n${top3txt}\n\n${nc.taxaEco>=30?'🏆 Excelente! Você está economizando bem!':nc.taxaEco>=10?'✅ Controle razoável. Tente chegar a 20% de economia!':'⚠️ Atenção! Seus gastos estão altos. Vamos cortar algo?'}`,badge:null};
+  }
+
+  if (/^resumo[\s!?]*$/.test(lower)||/resumo do dia|resumo de hoje/.test(lower)) {
+    const nc=calc();
+    const servs = nc.servDia.map(t=>`  ✂️ ${t.descricao}: ${fmt(t.valor)}`).join('\n')||'  Nenhum serviço ainda';
+    return {texto:`📋 Resumo do dia — ${hoje()}\n\n✂️ Serviços feitos:\n${servs}\n\n💰 Total entradas: ${fmt(nc.eH)}\n💸 Total gastos: ${fmt(nc.gH)}\n📊 Saldo do dia: ${fmt(nc.sH)}\n\n${nc.sH>=0?'✅ Dia positivo! Continue assim!':'⚠️ Dia negativo. Amanhã recupera! 💪'}`,badge:null};
+  }
+
+  if (/relat[oó]rio (m[eê]s|mensal)|relat[oó]rio completo|ver relat[oó]rio/.test(lower)) {
+    const ativas=DB.transacoes.filter(t=>!t.cancelada);
+    const doMes=t=>{const d=new Date(t.ts),n=new Date();return d.getMonth()===n.getMonth()&&d.getFullYear()===n.getFullYear();};
+    const mesTrans=ativas.filter(doMes);
+    const cats={};
+    mesTrans.filter(t=>t.tipo==='gasto').forEach(t=>{cats[t.categoria]=(cats[t.categoria]||0)+t.valor;});
+    const catTxt=Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`  ${k}: ${fmt(v)}`).join('\n')||'  Nenhum gasto registrado';
+    const catsE={};
+    mesTrans.filter(t=>t.tipo==='entrada').forEach(t=>{catsE[t.categoria]=(catsE[t.categoria]||0)+t.valor;});
+    const catETxt=Object.entries(catsE).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`  ${k}: ${fmt(v)}`).join('\n')||'  Nenhuma entrada registrada';
+    const nc=calc();
+    return {texto:`📊 Relatório do Mês:\n\n💰 Entradas: ${fmt(nc.eM)}\n💸 Gastos: ${fmt(nc.gM)}\n📈 Saldo: ${fmt(nc.sM)}\n📉 Economia: ${nc.taxaEco.toFixed(0)}%\n\n📥 Entradas por categoria:\n${catETxt}\n\n📤 Gastos por categoria:\n${catTxt}\n\n${nc.taxaEco>=20?'✅ Mês positivo!':nc.sM>=0?'⚠️ Mês ok mas pode melhorar!':'🚨 Mês negativo! Revise seus gastos.'}`,badge:null};
+  }
+
+  if (/quanto (tenho|sobrou|eu tenho)|meu saldo|saldo atual/.test(lower)) {
+    const nc=calc();
+    return {texto:`💰 Seu saldo agora:\n\n📅 Hoje: ${fmt(nc.sH)}\n📈 No mês: ${fmt(nc.sM)}\n💰 Entradas: ${fmt(nc.eM)}\n💸 Gastos: ${fmt(nc.gM)}\n📉 Economia: ${nc.taxaEco.toFixed(0)}%${DB.meta>0?`\n\n🎯 Meta: ${fmt(DB.meta)}\n📊 ${Math.min(100,Math.round(nc.sM/DB.meta*100))}% atingida`:''}`,badge:null};
+  }
+
+  if (/quanto (posso|dá pra|da pra) gastar|limite (do dia|diário|diario)/.test(lower)) {
+    const nc=calc();
+    if(nc.limDia!==null) return {texto:`📊 Seu limite hoje:\n\n💡 Pode gastar: ${fmt(nc.limDia)}\n💸 Já gastou hoje: ${fmt(nc.gH)}\n\n${nc.gH>nc.limDia?'⚠️ Você passou do limite! Tente compensar amanhã.':'✅ Você ainda está dentro do limite!'}`,badge:null};
+    return {texto:`Você não definiu uma meta mensal ainda.\n\nFale: "Meta do mês é R$X" e calculo o limite diário! 🎯`,badge:null};
+  }
+
+  // ── DICAS E CONSELHOS ──
+  if (/^dica[\s!?]*$/.test(lower)||/dica de economia|me d[aá] uma dica|alguma dica/.test(lower)) {
+    const nc=calc();
+    const dicas=[
+      `Regra 50-30-20: 50% necessidades, 30% desejos, 20% poupança. Com ${fmt(nc.eM)} de entradas, tente guardar ${fmt(nc.eM*0.2)}.`,
+      `Anote TUDO, até o cafezinho de R$2. Quem controla o pequeno, controla o grande! 💪`,
+      `Antes de qualquer compra acima de R$50, espere 24h. Se ainda quiser, compra. Se esquecer, não precisava.`,
+      `Fidelidade vale ouro! Um cliente fixo na barbearia vale mais que 5 avulsos. Invista no relacionamento.`,
+      `Comissione seus serviços adicionais: ofereça sobrancelha junto ao corte. Ticket médio sobe sem esforço!`,
+      `Separe no mínimo 10% de CADA entrada assim que receber. Antes de gastar. Isso é pagar a si mesmo primeiro!`,
+      `Tenha uma "caixinha de emergência": pelo menos R$500 guardados para imprevistos. Muda o jogo mental!`,
+    ];
+    return {texto:`💡 Dica do dia:\n\n${dicas[Math.floor(Math.random()*dicas.length)]}`,badge:null};
+  }
+
+  if (/ideias|ganhar mais|aumentar renda|renda extra/.test(lower)) {
+    return {texto:`💡 Ideias para turbinar sua renda:\n\n1️⃣ Combo corte + barba com preço especial\n   → R$60 em vez de R$65 (atrai mais clientes)\n\n2️⃣ Atendimento aos domingos\n   → Menos concorrência, mais demanda\n\n3️⃣ Pacote mensal fidelidade\n   → Cliente paga adiantado, você garante renda fixa\n\n4️⃣ Venda de produtos na barbearia\n   → Pomada, shampoo, cera — margem de 50%\n\n5️⃣ Instagram com antes/depois dos cortes\n   → Clientes novos sem pagar anúncio\n\n6️⃣ Indicação premiada\n   → "Traga um amigo, ganhe desconto"\n\n7️⃣ Horário estendido 1x por semana\n   → Atende quem trabalha de dia\n\nQual delas você quer detalhar? 💪`,badge:null};
+  }
+
+  if (/plano de economia|economizar|como (poupar|guardar)/.test(lower)) {
+    const nc=calc();
+    const top=DB.transacoes.filter(t=>!t.cancelada&&t.tipo==='gasto').sort((a,b)=>b.valor-a.valor).slice(0,3);
+    const topTxt=top.length?top.map((t,i)=>`${i+1}. ${t.descricao}: ${fmt(t.valor)}`).join('\n'):'Nenhum gasto ainda';
+    return {texto:`📉 Plano de Economia Personalizado:\n\nSeus 3 maiores gastos:\n${topTxt}\n\nPasso a passo:\n1️⃣ Defina sua meta: "Meta do mês é R$X"\n2️⃣ Corte o maior gasto desnecessário\n3️⃣ Registre TUDO aqui todos os dias\n4️⃣ Separe 10% de cada entrada\n5️⃣ Revise o relatório toda segunda-feira\n\n${nc.eM>0?`Com ${fmt(nc.eM)} de entradas, guardar 20% = ${fmt(nc.eM*0.2)} este mês! 💰`:'Comece registrando suas entradas!'}`,badge:null};
+  }
+
+  if (/dívida|divida|devo|empréstimo|emprestimo|parcela (alto|alta)|juros/.test(lower)) {
+    return {texto:`💳 Estratégia para sair das dívidas:\n\n1️⃣ Liste todas: valor, juros, parcelas\n2️⃣ Priorize a de MAIOR juros primeiro\n   (cartão de crédito é o pior!)\n3️⃣ Pague o mínimo das outras\n4️⃣ Jogue tudo no de maior juros\n5️⃣ Quando quitar, repita para a próxima\n\n⚠️ NUNCA faça nova dívida para pagar outra\n⚠️ Negocie: credores aceitam desconto à vista\n\nRegistre seus pagamentos como:\n"Gastei R$X parcela [nome]" 📊`,badge:null};
+  }
+
+  if (/invest|aplicar|poupança|poupanca|tesouro|rend[ae]r/.test(lower)) {
+    const nc=calc();
+    return {texto:`📈 Como começar a investir:\n\n1️⃣ Primeiro: quite as dívidas\n   (juros de dívida > retorno de investimento)\n\n2️⃣ Monte reserva de emergência\n   → 3 a 6 meses de gastos guardados\n   → Sua meta: ${fmt(nc.mediaG*3)} a ${fmt(nc.mediaG*6)}\n\n3️⃣ Opções seguras para começar:\n   → Tesouro Selic (mais seguro do país)\n   → CDB de bancos digitais (100% CDI)\n   → Poupança (última opção)\n\n4️⃣ Só depois: ações e fundos\n\n${nc.sM>0?`Você tem ${fmt(nc.sM)} de saldo — comece hoje! 💪`:'Estabilize o financeiro primeiro.'}\n\n⚠️ Essas são orientações gerais. Consulte um especialista!`,badge:null};
+  }
+
+  if (/gastando muito|gasto (muito|alto|pesado)|saindo muito|não sobra nada|nao sobra/.test(lower)) {
+    const nc=calc();
+    const top=DB.transacoes.filter(t=>!t.cancelada&&t.tipo==='gasto').sort((a,b)=>b.valor-a.valor).slice(0,3);
+    const topTxt=top.length?top.map((t,i)=>`  ${i+1}. ${t.descricao}: ${fmt(t.valor)}`).join('\n'):'  Registre seus gastos para eu analisar!';
+    return {texto:`🚨 Vamos resolver isso!\n\nSeus maiores gastos:\n${topTxt}\n\nO que fazer agora:\n✂️ Identifique o que dá para cortar\n🎯 Defina uma meta: "Meta do mês é R$X"\n📱 Registre tudo aqui todos os dias\n💰 Separe 10% de cada entrada\n\nQuer um plano detalhado? Fala "Plano de economia"!`,badge:null};
+  }
+
+  if (/desanim|cansad|difícil|dificil|não consigo|nao consigo|tô mal|to mal|tô ruim|to ruim/.test(lower)) {
+    return {texto:`Ei, respira! 💪\n\nControle financeiro é uma habilidade — ninguém nasce sabendo. O fato de você estar aqui já te coloca à frente da maioria das pessoas.\n\nUm registro de cada vez. Um dia de cada vez.\n\nO que tá pesado? Me conta que a gente resolve junto. 😊`,badge:null};
+  }
+
+  // ── PERGUNTAS SOBRE SERVIÇOS ESPECÍFICOS ──
+  if (/quanto (custa|é|e) (o|a|um|uma)? ?(corte|barba|progressiva|luzes|alisamento|tintura|pezinho|sobrancelha)/.test(lower)) {
+    const serv2 = detectarServico(lower);
+    if(serv2) return {texto:`✂️ ${serv2.nome}: ${fmt(serv2.valor)}\n\nPara registrar, fale:\n"Fiz ${serv2.nome.toLowerCase()}"`,badge:null};
+  }
+
+  // ── RESPOSTA PADRÃO INTELIGENTE ──
+  return {texto:`Entendi! 😊 Mas não sei exatamente o que fazer com isso.\n\nTenta assim:\n✂️ "Fiz um corte" (serviço da barbearia)\n💰 "Ganhei R$X" (entrada manual)\n💸 "Gastei R$X no [lugar]" (gasto)\n📊 "Como estou?" (análise completa)\n❓ "Ajuda" (ver todos os comandos)`,badge:null};
+}
+
+// ════════════════════════════════
+// ENVIAR MENSAGEM
+// ════════════════════════════════
+async function enviar(){
+  const txt=document.getElementById('txt');
+  const msg=txt.value.trim();
+  if(!msg) return;
+  txt.value=''; txt.style.height='auto';
+  addMsg(msg,'out');
+  showTyping();
+  await new Promise(r=>setTimeout(r,500));
+  hideTyping();
+  const resp=responder(msg);
+  addMsg(resp.texto,'in',resp.badge);
+}
+
+// ════════════════════════════════
+// VOZ
+// ════════════════════════════════
+let recog=null, micOn=false;
+function toggleMic(){
+  if(!('webkitSpeechRecognition'in window||'SpeechRecognition'in window)){toast('Microfone não suportado 😕');return;}
+  micOn?pararMic():iniciarMic();
+}
+function iniciarMic(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  recog=new SR(); recog.lang='pt-BR'; recog.continuous=false; recog.interimResults=true;
+  const btn=document.getElementById('micbtn'),ov=document.getElementById('vov'),txt=document.getElementById('txt');
+  recog.onstart=()=>{micOn=true;btn.classList.add('rec');ov.classList.add('on');};
+  recog.onresult=e=>{let t='';for(let i=e.resultIndex;i<e.results.length;i++)t+=e.results[i][0].transcript;txt.value=t;grow(txt);};
+  recog.onend=()=>{micOn=false;btn.classList.remove('rec');ov.classList.remove('on');if(txt.value.trim()&&DB.config.autoenvio!==false)setTimeout(enviar,300);};
+  recog.onerror=e=>{micOn=false;btn.classList.remove('rec');ov.classList.remove('on');if(e.error==='not-allowed')toast('Permita acesso ao microfone 🎤');};
+  recog.start();
+}
+function pararMic(){if(recog)recog.stop();}
+
+// ════════════════════════════════
+// MODAIS
+// ════════════════════════════════
+function abrirModal(tipo){
+  const el=document.getElementById('modal-body');
+  if(tipo==='extrato'){
+    const lista=[...DB.transacoes].reverse();
+    const html=lista.length===0?'<p style="color:var(--dim);text-align:center;padding:20px">Nenhuma transação ainda</p>'
+      :lista.map(t=>`<div class="titem${t.cancelada?' off':''}">
+        <div style="flex:1">
+          <div class="tdesc">${t.cancelada?'<s>'+t.descricao+'</s>':t.descricao}</div>
+          <div class="tmeta">${t.data} ${t.hora}</div>
+          <div class="tcat">${t.categoria||'Outros'}${t.cancelada?' · cancelado':''}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px">
+          <div class="tamt ${t.tipo==='gasto'?'n':'p'}">${t.tipo==='gasto'?'-':'+'}${fmt(t.valor)}</div>
+          ${!t.cancelada?'<button class="tdel" onclick="apagarT('+t.id+')">apagar</button>':''}
+        </div>
+      </div>`).join('');
+    el.innerHTML='<h2>📋 Extrato Completo</h2>'+html+'<button class="cbtn" onclick="fecharModal()">Fechar</button>';
+  }
+  if(tipo==='config'){
+    const cfg=DB.config;
+    el.innerHTML=`<h2>⚙️ Configurações</h2>
+      <div class="stitle">Nome do assistente</div>
+      <div class="row"><input type="text" id="c-nome" value="${cfg.nome||'Juninho'}" placeholder="Juninho"><button onclick="saveCfg()">Salvar</button></div>
+      <div class="stitle">Sua profissão</div>
+      <div class="row"><input type="text" id="c-prof" value="${cfg.profissao||'Barbeiro'}" placeholder="Barbeiro"><button onclick="saveCfg()">OK</button></div>
+      <div class="stitle">Meta mensal de economia</div>
+      <div class="row"><input type="number" id="c-meta" value="${DB.meta>0?DB.meta:''}" placeholder="Ex: 2000"><button onclick="saveMeta()">Salvar</button></div>
+      <label style="display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer;margin-bottom:12px">
+        <input type="checkbox" id="c-auto" ${cfg.autoenvio!==false?'checked':''} style="width:16px;height:16px;accent-color:var(--green)">
+        Enviar automaticamente após voz
+      </label>
+      <div class="stitle">Backup</div>
+      <button class="cbtn" style="margin-top:0;margin-bottom:8px;border-color:var(--blue);color:var(--blue)" onclick="exportar()">📥 Exportar backup JSON</button>
+      <div class="stitle">Limpar dados</div>
+      <button class="cbtn" style="margin-top:0;margin-bottom:6px;border-color:var(--yellow);color:var(--yellow)" onclick="limparTrans()">🧹 Limpar só transações</button>
+      <button class="cbtn" style="margin-top:0;margin-bottom:8px;border-color:var(--red);color:var(--red)" onclick="limparTudo()">🗑️ Limpar tudo</button>
+      <button class="cbtn" onclick="fecharModal()">Fechar</button>`;
+  }
+  document.getElementById('modal').classList.add('open');
+}
+
+function saveCfg(){
+  DB.config.nome=document.getElementById('c-nome')?.value.trim()||'Juninho';
+  DB.config.profissao=document.getElementById('c-prof')?.value.trim()||'Barbeiro';
+  DB.config.autoenvio=document.getElementById('c-auto')?.checked!==false;
+  dbSave();
+  document.getElementById('nome-h').textContent=DB.config.nome+' — Mentor Financeiro';
+  document.title=DB.config.nome+' — Mentor Financeiro';
+  fecharModal(); toast('Configurações salvas ✓');
+  addMsg('Perfeito! Pode me chamar de '+DB.config.nome+'! 😊','in');
+}
+function saveMeta(){
+  const v=parseFloat(document.getElementById('c-meta')?.value);
+  if(v>0){DB.meta=v;dbSave();painel();fecharModal();toast('Meta salva ✓');addMsg('Meta definida: '+fmt(v)+' para o mês! 🎯\nVou monitorar tudo por você!','in');}
+}
+function apagarT(id){if(confirm('Apagar esta transação?')){dbCancel(id);fecharModal();toast('Apagado ✓');}}
+function exportar(){
+  const b=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(b);
+  a.download='juninho-backup-'+hoje().replace(/\//g,'-')+'.json';
+  a.click(); toast('Backup exportado ✓');
+}
+function limparTrans(){if(confirm('Apagar todas as transações? A conversa fica.')){DB.transacoes=[];dbSave();painel();fecharModal();toast('Transações limpas ✓');addMsg('Zerado! Novo começo. 💪','in');}}
+function limparTudo(){if(confirm('Apagar TUDO incluindo conversa?')){DB.transacoes=[];DB.historico=[];dbSave();painel();fecharModal();document.getElementById('chat').innerHTML='<div class="divider">Hoje</div>';setTimeout(()=>addMsg('Tudo limpo! Novo começo. 💪','in'),200);}}
+function fecharModal(){document.getElementById('modal').classList.remove('open');}
+
+function hint(el){const i=document.getElementById('txt');i.value=el.textContent;i.focus();grow(i);}
+function onKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();enviar();}}
+function grow(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,90)+'px';}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+
+// ════════════════════════════════
+// INICIALIZAÇÃO
+// ════════════════════════════════
+painel();
+const nomeInicial = DB.config.nome||'Juninho';
+document.getElementById('nome-h').textContent = nomeInicial+' — Mentor Financeiro';
+document.title = nomeInicial+' — Mentor Financeiro';
+
+const temHist = loadHist();
+if(!temHist){
+  setTimeout(()=>addMsg(`Olá! 👋 Sou o ${nomeInicial}, seu mentor financeiro da barbearia!\n\nJá sei os preços de todos os seus serviços:\n✂️ Corte: R$35 | Barba: R$30\n💈 Progressiva/Luzes: R$65\n🪒 Pezinho/Sobrancelha: R$20\n\nÉ só falar:\n"Fiz um corte" → registro automático!\n"Fiz 3 barba" → R$90 automático!\n\nSem internet, sem erro, 100% offline! 💪\n\nQual foi o primeiro serviço do dia?`,'in'),300);
+} else {
+  const ult=DB.transacoes.filter(t=>!t.cancelada).slice(-1)[0];
+  if(ult&&(Date.now()-ult.ts)>86400000){
+    setTimeout(()=>addMsg('Que bom te ver! 😊 Você teve movimento hoje? Me conta que registro na hora!','in'),400);
+  }
+}
+</script>
+</body>
+</html>
