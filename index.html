@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Barbearia Juninho & Mirinho</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#0A0A0A;color:#F5F0E8;font-family:Georgia,serif;min-height:100vh;}
+input,select{background:#1A1A1A;border:1px solid #2A2A2A;border-radius:4px;color:#F5F0E8;padding:12px 16px;font-size:16px;width:100%;font-family:Georgia,serif;outline:none;}
+input:focus,select:focus{border-color:#9A7A2E;}
+select option{background:#1A1A1A;}
+button{cursor:pointer;font-family:Georgia,serif;}
+.tela{display:none;}
+.ativa{display:block;}
+.bebas{font-family:'Bebas Neue',sans-serif;}
+.card{background:#1A1A1A;border:1px solid #2A2A2A;border-radius:8px;padding:20px;}
+.btn-gold{background:linear-gradient(135deg,#9A7A2E,#C9A84C,#E8C97A);border:none;border-radius:4px;padding:16px;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:3px;color:#0A0A0A;width:100%;}
+.btn-ghost{background:transparent;border:1px solid #333;border-radius:4px;padding:12px;color:#888;font-size:13px;width:100%;}
+.lbl{font-size:10px;color:#C9A84C;letter-spacing:2px;display:block;margin-bottom:6px;}
+.sc{background:#1A1A1A;border:1px solid #2A2A2A;border-radius:4px;padding:14px;cursor:pointer;position:relative;}
+.sc.sel{background:#222;border-color:#C9A84C;}
+.wabtn{position:fixed;bottom:20px;right:20px;width:52px;height:52px;background:#25D366;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(37,211,102,0.4);text-decoration:none;z-index:50;}
+.slot{display:flex;gap:8px;align-items:center;margin-bottom:5px;}
+.slot-h{font-size:12px;color:#666;width:40px;flex-shrink:0;}
+.slot-livre{flex:1;background:#111;border:1px solid #1A1A1A;border-radius:5px;padding:7px 12px;color:#333;font-size:11px;}
+.slot-oc{flex:1;background:#0d1f0d;border:1px solid #4CAF50;border-radius:5px;padding:9px 12px;display:flex;justify-content:space-between;align-items:center;gap:6px;}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.88);display:flex;align-items:center;justify-content:center;padding:20px;z-index:100;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+.loading{text-align:center;padding:30px;color:#888;}
+</style>
+</head>
+<body>
+
+<!-- TELA INICIO -->
+<div id="t-inicio" class="tela ativa">
+  <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;text-align:center;">
+    <div style="border:1px solid #9A7A2E;color:#C9A84C;font-size:11px;letter-spacing:4px;padding:6px 20px;display:inline-block;margin-bottom:20px;">✦ AGENDAMENTO ONLINE ✦</div>
+    <div class="bebas" style="font-size:clamp(48px,14vw,86px);line-height:0.9;color:#F5F0E8;letter-spacing:2px;">BARBEARIA<br><span style="color:#C9A84C;">JUNINHO</span><br><span style="color:#C9A84C;">& MIRINHO</span></div>
+    <p style="color:#888;letter-spacing:3px;font-size:12px;margin:16px 0 36px;">ESTILO — PRECISÃO — EXCELÊNCIA</p>
+    <div style="display:flex;flex-direction:column;gap:12px;max-width:400px;width:100%;">
+      <button class="btn-gold" onclick="goAgendar()">✂️ AGENDAR HORÁRIO</button>
+      <button class="btn-ghost" onclick="goTela('t-admin')">🔐 Área do Barbeiro</button>
+    </div>
+    <p style="color:#444;font-size:11px;margin-top:20px;">⏰ Seg a Sáb — 9h às 19h</p>
+  </div>
+</div>
+
+<!-- TELA AGENDAR -->
+<div id="t-agendar" class="tela">
+  <div style="text-align:center;padding:36px 20px 16px;">
+    <button onclick="goTela('t-inicio')" style="background:transparent;border:none;color:#888;font-size:13px;margin-bottom:12px;">← Voltar</button>
+    <div class="bebas" style="font-size:clamp(30px,10vw,54px);color:#F5F0E8;line-height:1;">AGENDAR <span style="color:#C9A84C;">HORÁRIO</span></div>
+    <p style="color:#888;font-size:11px;letter-spacing:2px;margin-top:6px;">⏰ SEG A SÁB — 9H ÀS 19H</p>
+  </div>
+  <div style="max-width:800px;margin:0 auto;padding:0 16px 80px;">
+    <div class="bebas" style="font-size:20px;color:#C9A84C;text-align:center;margin-bottom:6px;">Escolha os Serviços</div>
+    <p style="text-align:center;color:#888;font-size:11px;margin-bottom:16px;">SELECIONE UM OU MAIS</p>
+    <div id="sc-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:8px;margin-bottom:16px;"></div>
+    <div id="total-bar" style="display:none;background:#1A1A1A;border:1px solid #9A7A2E;border-radius:4px;padding:14px 20px;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <span style="color:#888;font-size:11px;letter-spacing:2px;">TOTAL</span>
+      <div style="display:flex;gap:20px;">
+        <div style="text-align:right;"><div style="font-size:9px;color:#888;">TEMPO</div><div class="bebas" style="font-size:20px;color:#C9A84C;" id="t-tempo">0</div></div>
+        <div style="text-align:right;"><div style="font-size:9px;color:#888;">VALOR</div><div class="bebas" style="font-size:20px;color:#C9A84C;" id="t-valor">R$0</div></div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:14px;">
+      <div class="bebas" style="font-size:18px;color:#C9A84C;margin-bottom:18px;">Seus Dados & Horário</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div><label class="lbl">Nome</label><input id="ag-nome" placeholder="Seu nome"/></div>
+        <div><label class="lbl">WhatsApp</label><input id="ag-tel" placeholder="(31) 9 9999-9999" type="tel"/></div>
+        <div><label class="lbl">Data</label><input type="date" id="ag-data"/></div>
+        <div><label class="lbl">Horário</label><select id="ag-hor"><option value="">Selecione a data</option></select></div>
+      </div>
+    </div>
+    <div id="ag-erro" style="display:none;background:rgba(255,68,68,0.1);border:1px solid #ff4444;color:#ff6b6b;padding:12px 16px;border-radius:4px;font-size:13px;margin-bottom:14px;"></div>
+    <button class="btn-gold" id="btn-conf" onclick="confirmar()">✦ CONFIRMAR AGENDAMENTO ✦</button>
+  </div>
+  <a href="https://wa.me/5531995379542" target="_blank" class="wabtn">
+    <svg viewBox="0 0 24 24" width="28" height="28" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.112 1.523 5.843L.057 23.428a.5.5 0 0 0 .609.61l5.649-1.48A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.8 9.8 0 0 1-5.003-1.372l-.358-.213-3.714.973.99-3.631-.234-.374A9.818 9.818 0 1 1 12 21.818z"/></svg>
+  </a>
+</div>
+
+<!-- TELA SUCESSO -->
+<div id="t-sucesso" class="tela">
+  <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;">
+    <div class="card" style="border-color:#C9A84C;max-width:420px;width:100%;text-align:center;padding:40px;">
+      <div style="font-size:48px;margin-bottom:12px;">✂️</div>
+      <div class="bebas" style="font-size:36px;color:#C9A84C;letter-spacing:3px;margin-bottom:16px;">AGENDADO!</div>
+      <div style="background:#111;border-radius:6px;padding:16px;margin-bottom:20px;text-align:left;" id="suc-det"></div>
+      <a id="suc-wa" href="#" target="_blank" style="display:block;background:#25D366;border-radius:4px;padding:14px;color:white;text-decoration:none;font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;margin-bottom:10px;">📲 CONFIRMAR VIA WHATSAPP</a>
+      <button class="btn-ghost" onclick="goTela('t-inicio')">Voltar ao início</button>
+    </div>
+  </div>
+</div>
+
+<!-- TELA ADMIN -->
+<div id="t-admin" class="tela">
+  <div id="adm-login" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;">
+    <div class="card" style="max-width:360px;width:100%;text-align:center;padding:40px;">
+      <div style="font-size:40px;margin-bottom:12px;">🔐</div>
+      <div class="bebas" style="font-size:28px;color:#C9A84C;letter-spacing:3px;margin-bottom:6px;">ÁREA DO BARBEIRO</div>
+      <p style="color:#888;font-size:13px;margin-bottom:24px;">Digite sua senha para entrar</p>
+      <input type="password" id="senha-inp" placeholder="Senha" style="text-align:center;font-size:18px;letter-spacing:4px;margin-bottom:12px;"/>
+      <p id="senha-err" style="color:#ff6b6b;font-size:13px;margin-bottom:12px;display:none;">Senha incorreta!</p>
+      <button class="btn-gold" style="margin-bottom:12px;" onclick="login()">ENTRAR</button>
+      <button class="btn-ghost" onclick="goTela('t-inicio')">← Voltar</button>
+    </div>
+  </div>
+  <div id="adm-painel" style="display:none;max-width:900px;margin:0 auto;padding:20px 16px 60px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+      <div class="bebas" style="font-size:26px;color:#C9A84C;letter-spacing:3px;">📋 MINHA AGENDA</div>
+      <button onclick="sair()" style="background:transparent;border:1px solid #333;border-radius:4px;padding:8px 16px;color:#888;font-size:12px;">← Sair</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px;">
+      <div class="card"><div style="font-size:11px;color:#888;letter-spacing:2px;margin-bottom:4px;">HOJE</div><div class="bebas" id="r-qtd" style="font-size:40px;color:#C9A84C;">0</div><div style="font-size:12px;color:#888;">agendamentos</div></div>
+      <div class="card"><div style="font-size:11px;color:#888;letter-spacing:2px;margin-bottom:4px;">FATURAMENTO HOJE</div><div class="bebas" id="r-fat" style="font-size:40px;color:#C9A84C;">R$0</div><div style="font-size:12px;color:#888;">estimado</div></div>
+    </div>
+    <div class="card" style="margin-bottom:20px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <button onclick="mudaMes(-1)" style="background:transparent;border:1px solid #333;color:#C9A84C;width:36px;height:36px;border-radius:4px;font-size:18px;">‹</button>
+        <div class="bebas" id="cal-tit" style="font-size:20px;color:#F5F0E8;letter-spacing:2px;"></div>
+        <button onclick="mudaMes(1)" style="background:transparent;border:1px solid #333;color:#C9A84C;width:36px;height:36px;border-radius:4px;font-size:18px;">›</button>
+      </div>
+      <div class="cal-grid" id="cal-sem" style="margin-bottom:6px;"></div>
+      <div class="cal-grid" id="cal-dias"></div>
+    </div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <div class="bebas" id="slots-tit" style="font-size:18px;color:#F5F0E8;letter-spacing:1px;">Selecione um dia</div>
+        <button onclick="abrirModal()" style="background:linear-gradient(135deg,#9A7A2E,#C9A84C);border:none;border-radius:4px;padding:8px 14px;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:2px;color:#0A0A0A;">+ MARCAR</button>
+      </div>
+      <div id="slots"><div class="loading">Selecione um dia no calendário</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div id="modal" style="display:none;" class="overlay">
+  <div class="card" style="border-color:#C9A84C;max-width:380px;width:100%;padding:28px;">
+    <div class="bebas" style="font-size:22px;color:#C9A84C;letter-spacing:2px;margin-bottom:20px;">MARCAR HORÁRIO</div>
+    <div style="margin-bottom:12px;"><label class="lbl">Nome do Cliente</label><input id="m-nome" placeholder="Nome"/></div>
+    <div style="margin-bottom:12px;"><label class="lbl">WhatsApp (opcional)</label><input id="m-tel" placeholder="(31) 9 9999-9999"/></div>
+    <div style="margin-bottom:12px;"><label class="lbl">Serviço</label><select id="m-serv"><option value="">Selecione</option></select></div>
+    <div style="margin-bottom:20px;"><label class="lbl">Horário</label><select id="m-hor"><option value="">Selecione</option></select></div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn-ghost" style="flex:1;" onclick="fecharModal()">Cancelar</button>
+      <button onclick="confirmarManual()" style="flex:2;background:linear-gradient(135deg,#9A7A2E,#C9A84C);border:none;border-radius:4px;padding:12px;font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;color:#0A0A0A;">CONFIRMAR</button>
+    </div>
+  </div>
+</div>
+
+<!-- FIREBASE SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, push, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDqC0bDjdK2EkAJCIidEYrU01tcgPRmrio",
+  authDomain: "barbearia-juninho-e-mirinho.firebaseapp.com",
+  databaseURL: "https://barbearia-juninho-e-mirinho-default-rtdb.firebaseio.com",
+  projectId: "barbearia-juninho-e-mirinho",
+  storageBucket: "barbearia-juninho-e-mirinho.firebasestorage.app",
+  messagingSenderId: "942836608130",
+  appId: "1:942836608130:web:1e6bca4780f314b88d189b"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const agRef = ref(db, 'agendamentos');
+
+var SERVICOS=[
+  {id:0,nome:'Corte',preco:35,duracao:30},
+  {id:1,nome:'Barba',preco:30,duracao:30},
+  {id:2,nome:'Sobrancelha',preco:20,duracao:15},
+  {id:3,nome:'Pezinho',preco:20,duracao:15},
+  {id:4,nome:'Alisamento',preco:35,duracao:30},
+  {id:5,nome:'Tintura',preco:35,duracao:30},
+  {id:6,nome:'Luzes',preco:65,duracao:30},
+  {id:7,nome:'Progressiva',preco:65,duracao:30},
+  {id:8,nome:'Nevou',preco:140,duracao:30}
+];
+
+var HORARIOS=[];
+for(var t=9*60;t<19*60;t+=30){
+  var hh=Math.floor(t/60).toString().padStart(2,'0');
+  var mm=(t%60).toString().padStart(2,'0');
+  HORARIOS.push(hh+':'+mm);
+}
+
+var MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+var DS=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+var SENHA='juninho2024';
+var WA='5531995379542';
+
+var ags={};
+var sel=[];
+var mesA=new Date().getMonth();
+var anoA=new Date().getFullYear();
+var diaA=hojeISO();
+
+// Escuta mudanças no Firebase em tempo real
+onValue(agRef, function(snapshot){
+  ags = snapshot.val() || {};
+  if(document.getElementById('adm-painel').style.display!=='none'){
+    renderResumo();
+    renderCal();
+    renderSlots();
+  }
+});
+
+function hojeISO(){return new Date().toISOString().split('T')[0];}
+function fmtD(d){if(!d)return'';var p=d.split('-');return p[2]+'/'+p[1]+'/'+p[0];}
+function nomeD(d){return DS[new Date(d+'T12:00:00').getDay()];}
+function isDom(d){return new Date(d+'T12:00:00').getDay()===0;}
+
+function getAgsAtivos(){
+  var list=[];
+  Object.keys(ags).forEach(function(k){
+    if(ags[k].status!=='cancelado') list.push(Object.assign({fireKey:k},ags[k]));
+  });
+  return list;
+}
+
+window.goTela=function(id){
+  document.querySelectorAll('.tela').forEach(function(t){t.classList.remove('ativa');});
+  document.getElementById(id).classList.add('ativa');
+}
+
+window.goAgendar=function(){
+  goTela('t-agendar');
+  sel=[];
+  renderSC();
+  var inp=document.getElementById('ag-data');
+  inp.min=hojeISO();
+  inp.value='';
+  inp.onchange=function(){carregarHorarios();};
+  document.getElementById('ag-hor').innerHTML='<option value="">Selecione o horário</option>';
+  document.getElementById('ag-nome').value='';
+  document.getElementById('ag-tel').value='';
+  document.getElementById('ag-erro').style.display='none';
+}
+
+function renderSC(){
+  var html='';
+  for(var i=0;i<SERVICOS.length;i++){
+    var s=SERVICOS[i];
+    var isSel=sel.indexOf(s.id)>=0;
+    html+='<div class="sc'+(isSel?' sel':'')+'" onclick="toggleSC('+s.id+')">';
+    if(isSel) html+='<div style="position:absolute;top:8px;right:8px;width:18px;height:18px;background:#C9A84C;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;color:#0A0A0A;">✓</div>';
+    html+='<div style="font-size:14px;color:#F5F0E8;margin-bottom:4px;padding-right:22px;">'+s.nome+'</div>';
+    html+='<div style="font-size:10px;color:#888;margin-bottom:6px;">⏱ '+s.duracao+' min</div>';
+    html+='<div class="bebas" style="font-size:22px;color:#C9A84C;">R$ '+s.preco+'</div>';
+    html+='</div>';
+  }
+  document.getElementById('sc-grid').innerHTML=html;
+  atualizarTotal();
+}
+
+window.toggleSC=function(id){
+  var idx=sel.indexOf(id);
+  if(idx>=0) sel.splice(idx,1); else sel.push(id);
+  renderSC();
+  document.getElementById('ag-hor').innerHTML='<option value="">Selecione</option>';
+  if(document.getElementById('ag-data').value) carregarHorarios();
+}
+
+function atualizarTotal(){
+  var preco=0,tempo=0;
+  for(var i=0;i<sel.length;i++){preco+=SERVICOS[sel[i]].preco;tempo+=SERVICOS[sel[i]].duracao;}
+  var bar=document.getElementById('total-bar');
+  if(sel.length>0){
+    bar.style.display='flex';
+    document.getElementById('t-tempo').textContent=tempo+' min';
+    document.getElementById('t-valor').textContent='R$ '+preco;
+  } else {
+    bar.style.display='none';
+  }
+}
+
+function ocupados(data){
+  var list=[];
+  Object.keys(ags).forEach(function(k){
+    if(ags[k].data===data&&ags[k].status!=='cancelado') list.push(ags[k].horario);
+  });
+  return list;
+}
+
+function horariosLivres(data){
+  var oc=ocupados(data);
+  var dur=0;
+  for(var i=0;i<sel.length;i++) dur+=SERVICOS[sel[i]].duracao;
+  if(dur===0) dur=30;
+  var livres=[];
+  for(var i=0;i<HORARIOS.length;i++){
+    var h=HORARIOS[i];
+    if(oc.indexOf(h)>=0) continue;
+    var pts=h.split(':');
+    var ini=parseInt(pts[0])*60+parseInt(pts[1]);
+    var fim=ini+dur;
+    if(fim>19*60) continue;
+    var ok=true;
+    for(var j=0;j<oc.length;j++){
+      var ops=oc[j].split(':');
+      var oi=parseInt(ops[0])*60+parseInt(ops[1]);
+      if(ini<oi+30&&fim>oi){ok=false;break;}
+    }
+    if(ok) livres.push(h);
+  }
+  return livres;
+}
+
+window.carregarHorarios=function(){
+  var data=document.getElementById('ag-data').value;
+  var el=document.getElementById('ag-hor');
+  el.innerHTML='<option value="">Selecione o horário</option>';
+  if(!data) return;
+  if(isDom(data)){el.innerHTML='<option value="">Domingos fechado!</option>';return;}
+  var livres=horariosLivres(data);
+  for(var i=0;i<livres.length;i++){
+    var o=document.createElement('option');
+    o.value=livres[i];o.textContent=livres[i];el.appendChild(o);
+  }
+}
+
+window.confirmar=function(){
+  var nome=document.getElementById('ag-nome').value.trim();
+  var tel=document.getElementById('ag-tel').value.trim();
+  var data=document.getElementById('ag-data').value;
+  var horario=document.getElementById('ag-hor').value;
+  var err=document.getElementById('ag-erro');
+  if(!nome||!tel||!data||!horario||sel.length===0){
+    err.textContent='⚠️ Preencha todos os campos e selecione um serviço!';
+    err.style.display='block';return;
+  }
+  err.style.display='none';
+  var btn=document.getElementById('btn-conf');
+  btn.textContent='AGUARDE...';btn.disabled=true;
+  var servNomes=[];
+  for(var i=0;i<sel.length;i++) servNomes.push(SERVICOS[sel[i]].nome);
+  var sn=servNomes.join(', ');
+  var total=0,dur=0;
+  for(var i=0;i<sel.length;i++){total+=SERVICOS[sel[i]].preco;dur+=SERVICOS[sel[i]].duracao;}
+  
+  push(agRef,{nome:nome,telefone:tel,servicos:sn,data:data,horario:horario,duracao:dur,total:total,status:'confirmado',criadoEm:new Date().toISOString()})
+  .then(function(){
+    document.getElementById('suc-det').innerHTML=
+      '<p style="color:#F5F0E8;margin:6px 0;">👤 '+nome+'</p>'+
+      '<p style="color:#F5F0E8;margin:6px 0;">✂️ '+sn+'</p>'+
+      '<p style="color:#C9A84C;margin:6px 0;font-weight:bold;">📅 '+fmtD(data)+' ('+nomeD(data)+') às '+horario+'</p>'+
+      '<p style="color:#F5F0E8;margin:6px 0;">⏱ '+dur+' min | 💰 R$ '+total+'</p>';
+    var msg=encodeURIComponent('Olá! Agendei:\n👤 '+nome+'\n✂️ '+sn+'\n📅 '+fmtD(data)+' às '+horario+'\n💰 R$ '+total);
+    document.getElementById('suc-wa').href='https://wa.me/'+WA+'?text='+msg;
+    btn.textContent='✦ CONFIRMAR AGENDAMENTO ✦';btn.disabled=false;
+    sel=[];
+    goTela('t-sucesso');
+  });
+}
+
+window.login=function(){
+  if(document.getElementById('senha-inp').value===SENHA){
+    document.getElementById('adm-login').style.display='none';
+    document.getElementById('adm-painel').style.display='block';
+    renderResumo();renderCal();renderSlots();
+  } else {
+    document.getElementById('senha-err').style.display='block';
+  }
+}
+
+window.sair=function(){
+  document.getElementById('adm-login').style.display='flex';
+  document.getElementById('adm-painel').style.display='none';
+  document.getElementById('senha-inp').value='';
+  document.getElementById('senha-err').style.display='none';
+  goTela('t-inicio');
+}
+
+function renderResumo(){
+  var hoje=hojeISO(),qtd=0,fat=0;
+  Object.keys(ags).forEach(function(k){
+    if(ags[k].data===hoje&&ags[k].status!=='cancelado'){qtd++;fat+=ags[k].total;}
+  });
+  document.getElementById('r-qtd').textContent=qtd;
+  document.getElementById('r-fat').textContent='R$'+fat;
+}
+
+function renderCal(){
+  document.getElementById('cal-tit').textContent=MESES[mesA]+' '+anoA;
+  var sem=document.getElementById('cal-sem');
+  sem.innerHTML='';
+  for(var i=0;i<DS.length;i++){
+    var d=document.createElement('div');
+    d.style.cssText='text-align:center;font-size:11px;padding:4px 0;color:'+(i===0?'#ff6b6b':'#888');
+    d.textContent=DS[i];sem.appendChild(d);
+  }
+  var cont=document.getElementById('cal-dias');
+  cont.innerHTML='';
+  var primeiro=new Date(anoA,mesA,1);
+  var ultimo=new Date(anoA,mesA+1,0);
+  for(var i=0;i<primeiro.getDay();i++) cont.appendChild(document.createElement('div'));
+  for(var d=1;d<=ultimo.getDate();d++){
+    var date=new Date(anoA,mesA,d);
+    var iso=date.toISOString().split('T')[0];
+    var eDom=date.getDay()===0;
+    var eHoje=iso===hojeISO();
+    var eSel=iso===diaA;
+    var temAg=false;
+    Object.keys(ags).forEach(function(k){if(ags[k].data===iso&&ags[k].status!=='cancelado') temAg=true;});
+    var el=document.createElement('div');
+    el.style.cssText='background:'+(eSel?'#C9A84C':'transparent')+';border:1px solid '+(eSel?'#C9A84C':eHoje?'#4CAF50':'#2A2A2A')+';border-radius:5px;padding:6px 2px;text-align:center;font-size:13px;color:'+(eSel?'#0A0A0A':eHoje?'#4CAF50':'#F5F0E8')+';cursor:'+(eDom?'default':'pointer')+';opacity:'+(eDom?'0.3':'1')+';min-height:34px;';
+    el.textContent=d;
+    if(temAg){
+      var dot=document.createElement('div');
+      dot.style.cssText='width:5px;height:5px;background:'+(eSel?'#0A0A0A':'#C9A84C')+';border-radius:50%;margin:2px auto 0;';
+      el.appendChild(dot);
+    }
+    if(!eDom){
+      (function(isoDate){
+        el.addEventListener('click',function(){diaA=isoDate;renderCal();renderSlots();});
+      })(iso);
+    }
+    cont.appendChild(el);
+  }
+}
+
+window.mudaMes=function(dir){
+  mesA+=dir;
+  if(mesA<0){mesA=11;anoA--;}
+  if(mesA>11){mesA=0;anoA++;}
+  renderCal();
+}
+
+function renderSlots(){
+  document.getElementById('slots-tit').textContent=nomeD(diaA)+', '+fmtD(diaA);
+  var agsDia=[];
+  Object.keys(ags).forEach(function(k){
+    if(ags[k].data===diaA&&ags[k].status!=='cancelado') agsDia.push(Object.assign({fireKey:k},ags[k]));
+  });
+  agsDia.sort(function(a,b){return a.horario.localeCompare(b.horario);});
+  var html='';
+  for(var i=0;i<HORARIOS.length;i++){
+    var h=HORARIOS[i];
+    var ag=null;
+    for(var j=0;j<agsDia.length;j++){if(agsDia[j].horario===h){ag=agsDia[j];break;}}
+    if(ag){
+      var telNum='55'+ag.telefone.replace(/\D/g,'');
+      var msg=encodeURIComponent('Olá '+ag.nome+'! Confirmando: '+ag.servicos+' às '+ag.horario+' 😄');
+      html+='<div class="slot"><div class="slot-h">'+h+'</div><div class="slot-oc">';
+      html+='<div><div style="color:#F5F0E8;font-size:14px;font-weight:bold;">'+ag.nome+'</div>';
+      html+='<div style="color:#4CAF50;font-size:12px;">✂️ '+ag.servicos+' | ⏱'+ag.duracao+'min | 💰R$'+ag.total+'</div>';
+      if(ag.telefone&&ag.telefone!=='-') html+='<div style="color:#888;font-size:11px;">📱 '+ag.telefone+'</div>';
+      html+='</div><div style="display:flex;gap:5px;">';
+      html+='<a href="https://wa.me/'+telNum+'?text='+msg+'" target="_blank" style="background:#25D366;border-radius:4px;padding:6px 10px;color:white;text-decoration:none;font-size:13px;">📲</a>';
+      html+='<button onclick="cancelarAg(\''+ag.fireKey+'\')" style="background:transparent;border:1px solid #ff4444;border-radius:4px;padding:6px 10px;color:#ff4444;font-size:13px;">✕</button>';
+      html+='</div></div></div>';
+    } else {
+      html+='<div class="slot"><div class="slot-h">'+h+'</div><div class="slot-livre">Livre</div></div>';
+    }
+  }
+  document.getElementById('slots').innerHTML=html;
+}
+
+window.cancelarAg=function(fireKey){
+  if(!confirm('Cancelar este agendamento?')) return;
+  update(ref(db,'agendamentos/'+fireKey),{status:'cancelado'});
+}
+
+window.abrirModal=function(){
+  var ms=document.getElementById('m-serv');
+  ms.innerHTML='<option value="">Selecione</option>';
+  for(var i=0;i<SERVICOS.length;i++){
+    var o=document.createElement('option');
+    o.value=i;o.textContent=SERVICOS[i].nome+' — R$ '+SERVICOS[i].preco;
+    ms.appendChild(o);
+  }
+  var mh=document.getElementById('m-hor');
+  mh.innerHTML='<option value="">Selecione</option>';
+  var oc=ocupados(diaA);
+  for(var i=0;i<HORARIOS.length;i++){
+    if(oc.indexOf(HORARIOS[i])<0){
+      var o=document.createElement('option');
+      o.value=HORARIOS[i];o.textContent=HORARIOS[i];
+      mh.appendChild(o);
+    }
+  }
+  document.getElementById('m-nome').value='';
+  document.getElementById('m-tel').value='';
+  document.getElementById('modal').style.display='flex';
+}
+
+window.fecharModal=function(){document.getElementById('modal').style.display='none';}
+
+window.confirmarManual=function(){
+  var nome=document.getElementById('m-nome').value.trim();
+  var tel=document.getElementById('m-tel').value.trim();
+  var servIdx=document.getElementById('m-serv').value;
+  var horario=document.getElementById('m-hor').value;
+  if(!nome||servIdx===''||!horario) return;
+  var s=SERVICOS[parseInt(servIdx)];
+  push(agRef,{nome:nome,telefone:tel||'-',servicos:s.nome,data:diaA,horario:horario,duracao:s.duracao,total:s.preco,status:'confirmado',criadoEm:new Date().toISOString()})
+  .then(function(){fecharModal();});
+}
+</script>
+</body>
+</html>
