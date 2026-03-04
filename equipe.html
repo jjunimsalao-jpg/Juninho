@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Barbearia Juninho e Mirinho - Equipe</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#0A0A0A;color:#F5F0E8;font-family:Georgia,serif;min-height:100vh;}
+input,select{background:#1A1A1A;border:1px solid #2A2A2A;border-radius:4px;color:#F5F0E8;padding:12px 16px;font-size:16px;width:100%;font-family:Georgia,serif;outline:none;}
+input:focus,select:focus{border-color:#9A7A2E;}
+select option{background:#1A1A1A;}
+button{cursor:pointer;font-family:Georgia,serif;}
+.tela{display:none;}
+.ativa{display:block;}
+.bebas{font-family:'Bebas Neue',sans-serif;}
+.card{background:#1A1A1A;border:1px solid #2A2A2A;border-radius:8px;padding:20px;}
+.btn-gold{background:linear-gradient(135deg,#9A7A2E,#C9A84C,#E8C97A);border:none;border-radius:4px;padding:16px;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:3px;color:#0A0A0A;width:100%;}
+.btn-ghost{background:transparent;border:1px solid #333;border-radius:4px;padding:12px;color:#888;font-size:13px;width:100%;}
+.lbl{font-size:10px;color:#C9A84C;letter-spacing:2px;display:block;margin-bottom:6px;}
+.sc{background:#1A1A1A;border:1px solid #2A2A2A;border-radius:4px;padding:14px;cursor:pointer;position:relative;}
+.sc.sel{background:#222;border-color:#C9A84C;}
+.slot{display:flex;gap:8px;align-items:center;margin-bottom:5px;}
+.slot-h{font-size:12px;color:#666;width:40px;flex-shrink:0;}
+.slot-livre{flex:1;background:#111;border:1px solid #1A1A1A;border-radius:5px;padding:7px 12px;color:#333;font-size:11px;}
+.slot-oc{flex:1;background:#0d1f0d;border:1px solid #4CAF50;border-radius:5px;padding:9px 12px;display:flex;justify-content:space-between;align-items:center;gap:6px;}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.88);display:flex;align-items:center;justify-content:center;padding:20px;z-index:100;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+.tab-btn{padding:8px 14px;border:1px solid #333;background:transparent;color:#888;font-size:11px;border-radius:4px;cursor:pointer;}
+.tab-btn.ativo{background:#C9A84C;border-color:#C9A84C;color:#0A0A0A;font-weight:bold;}
+.barb-card{background:#1A1A1A;border:2px solid #2A2A2A;border-radius:12px;padding:16px;cursor:pointer;text-align:center;transition:all 0.2s;}
+.barb-card:hover{border-color:#C9A84C;}
+.barb-card.sel{border-color:#C9A84C;background:#1f1a0a;}
+.barb-foto{width:80px;height:80px;border-radius:50%;object-fit:cover;border:2px solid #333;margin:0 auto 8px;}
+.barb-card.sel .barb-foto{border-color:#C9A84C;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="t-login" class="tela ativa">
+  <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;">
+    <div class="card" style="max-width:380px;width:100%;text-align:center;padding:40px;">
+      <div style="font-size:40px;margin-bottom:12px;">✂️</div>
+      <div class="bebas" style="font-size:26px;color:#C9A84C;letter-spacing:3px;margin-bottom:4px;">BARBEARIA</div>
+      <div class="bebas" style="font-size:20px;color:#F5F0E8;letter-spacing:2px;margin-bottom:20px;">JUNINHO & MIRINHO</div>
+      <p style="color:#888;font-size:12px;margin-bottom:20px;">ACESSO DA EQUIPE</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px;">
+        <button id="btn-Lucas" style="background:#1A1A1A;border:1px solid #2A2A2A;border-radius:4px;padding:12px;color:#888;font-family:'Bebas Neue',sans-serif;font-size:15px;" onclick="selUser('Lucas')">✂️ LUCAS</button>
+        <button id="btn-Mirinho" style="background:#1A1A1A;border:1px solid #2A2A2A;border-radius:4px;padding:12px;color:#888;font-family:'Bebas Neue',sans-serif;font-size:15px;" onclick="selUser('Mirinho')">✂️ MIRINHO</button>
+        <button id="btn-Vitor" style="background:#1A1A1A;border:1px solid #2A2A2A;border-radius:4px;padding:12px;color:#888;font-family:'Bebas Neue',sans-serif;font-size:15px;" onclick="selUser('Vitor')">✂️ VITOR</button>
+        <button id="btn-Juninho" style="background:#1A1A1A;border:1px solid #9A7A2E;border-radius:4px;padding:12px;color:#C9A84C;font-family:'Bebas Neue',sans-serif;font-size:15px;" onclick="selUser('Juninho')">👑 JUNINHO</button>
+      </div>
+      <input type="password" id="senha-inp" placeholder="Senha" style="text-align:center;font-size:18px;letter-spacing:4px;margin-bottom:12px;"/>
+      <p id="senha-err" style="color:#ff6b6b;font-size:12px;margin-bottom:12px;display:none;">Senha incorreta!</p>
+      <button class="btn-gold" onclick="fazerLogin()">ENTRAR</button>
+    </div>
+  </div>
+</div>
+
+<!-- AGENDAR (clientes) -->
+<div id="t-agendar" class="tela">
+  <div style="text-align:center;padding:36px 20px 16px;">
+    <div style="border:1px solid #9A7A2E;color:#C9A84C;font-size:11px;letter-spacing:4px;padding:6px 20px;display:inline-block;margin-bottom:16px;">✦ AGENDAMENTO ONLINE ✦</div>
+    <div class="bebas" style="font-size:clamp(30px,10vw,54px);color:#F5F0E8;line-height:1;">AGENDAR <span style="color:#C9A84C;">HORARIO</span></div>
+    <p style="color:#888;font-size:11px;margin-top:6px;">SEG A SAB - 9H AS 19H</p>
+  </div>
+  <div style="max-width:800px;margin:0 auto;padding:0 16px 80px;">
+    <div class="bebas" style="font-size:20px;color:#C9A84C;text-align:center;margin-bottom:16px;">Escolha seu Barbeiro</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px;" id="barbeiros-grid"></div>
+    <div class="bebas" style="font-size:18px;color:#C9A84C;text-align:center;margin-bottom:6px;">Escolha os Servicos</div>
+    <p style="text-align:center;color:#888;font-size:11px;margin-bottom:14px;">SELECIONE UM OU MAIS</p>
+    <div id="sc-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:8px;margin-bottom:16px;"></div>
+    <div id="total-bar" style="display:none;background:#1A1A1A;border:1px solid #9A7A2E;border-radius:4px;padding:14px 20px;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <span style="color:#888;font-size:11px;">TOTAL</span>
+      <div style="display:flex;gap:20px;">
+        <div style="text-align:right;"><div style="font-size:9px;color:#888;">TEMPO</div><div class="bebas" style="font-size:20px;color:#C9A84C;" id="t-tempo">0</div></div>
+        <div style="text-align:right;"><div style="font-size:9px;color:#888;">VALOR</div><div class="bebas" style="font-size:20px;color:#C9A84C;" id="t-valor">R$0</div></div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:14px;">
+      <div class="bebas" style="font-size:18px;color:#C9A84C;margin-bottom:18px;">Seus Dados e Horario</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div><label class="lbl">Nome</label><input id="ag-nome" placeholder="Seu nome"/></div>
+        <div><label class="lbl">WhatsApp</label><input id="ag-tel" placeholder="(31) 9 9999-9999" type="tel"/></div>
+        <div><label class="lbl">Data</label><input type="date" id="ag-data" onchange="carregarHorarios()"/></div>
+        <div><label class="lbl">Horario</label><select id="ag-hor"><option value="">Selecione a data</option></select></div>
+      </div>
+    </div>
+    <div id="ag-erro" style="display:none;background:rgba(255,68,68,0.1);border:1px solid #ff4444;color:#ff6b6b;padding:12px 16px;border-radius:4px;font-size:13px;margin-bottom:14px;"></div>
+    <button class="btn-gold" id="btn-conf" onclick="confirmar()">✦ CONFIRMAR AGENDAMENTO ✦</button>
+  </div>
+</div>
+
+<!-- SUCESSO -->
+<div id="t-sucesso" class="tela">
+  <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;">
+    <div class="card" style="border-color:#C9A84C;max-width:420px;width:100%;text-align:center;padding:40px;">
+      <div style="font-size:48px;margin-bottom:12px;">✂️</div>
+      <div class="bebas" style="font-size:36px;color:#C9A84C;margin-bottom:16px;">AGENDADO!</div>
+      <div style="background:#111;border-radius:6px;padding:16px;margin-bottom:20px;text-align:left;" id="suc-det"></div>
+      <a id="suc-wa" href="#" target="_blank" style="display:block;background:#25D366;border-radius:4px;padding:14px;color:white;text-decoration:none;font-family:'Bebas Neue',sans-serif;font-size:18px;margin-bottom:10px;">📲 CONFIRMAR VIA WHATSAPP</a>
+      <button class="btn-ghost" onclick="initAgendar()">Fazer outro agendamento</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAINEL -->
+<div id="t-painel" class="tela">
+  <div style="max-width:900px;margin:0 auto;padding:20px 16px 60px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+      <div>
+        <div class="bebas" style="font-size:26px;color:#C9A84C;letter-spacing:3px;">📋 AGENDA - <span id="nome-logado"></span></div>
+        <div id="badge-dono" style="display:none;font-size:11px;color:#C9A84C;margin-top:2px;">👑 ADMINISTRADOR - ACESSO TOTAL</div>
+      </div>
+      <button onclick="sair()" style="background:transparent;border:1px solid #333;border-radius:4px;padding:8px 16px;color:#888;font-size:12px;">← Sair</button>
+    </div>
+
+    <!-- Filtro dono -->
+    <div id="filtro-div" style="display:none;margin-bottom:20px;">
+      <div style="font-size:11px;color:#888;margin-bottom:8px;">VER AGENDA DE:</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;" id="filtro-tabs"></div>
+    </div>
+
+    <!-- Cards resumo -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+      <div class="card"><div style="font-size:11px;color:#888;margin-bottom:4px;">HOJE</div><div class="bebas" id="r-qtd" style="font-size:40px;color:#C9A84C;">0</div><div style="font-size:12px;color:#888;">agendamentos</div></div>
+      <div class="card"><div style="font-size:11px;color:#888;margin-bottom:4px;">HOJE</div><div class="bebas" id="r-fat" style="font-size:40px;color:#C9A84C;">R$0</div><div style="font-size:12px;color:#888;">faturamento</div></div>
+    </div>
+
+    <!-- Faturamento mensal -->
+    <div class="card" style="margin-bottom:20px;" id="fat-card">
+      <div class="bebas" style="font-size:18px;color:#C9A84C;margin-bottom:12px;">💰 FATURAMENTO DO MES</div>
+      <div id="fat-mensal" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;"></div>
+    </div>
+
+    <!-- Calendário -->
+    <div class="card" style="margin-bottom:20px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <button onclick="mudaMes(-1)" style="background:transparent;border:1px solid #333;color:#C9A84C;width:36px;height:36px;border-radius:4px;font-size:18px;">&#8249;</button>
+        <div class="bebas" id="cal-tit" style="font-size:20px;color:#F5F0E8;"></div>
+        <button onclick="mudaMes(1)" style="background:transparent;border:1px solid #333;color:#C9A84C;width:36px;height:36px;border-radius:4px;font-size:18px;">&#8250;</button>
+      </div>
+      <div class="cal-grid" id="cal-sem" style="margin-bottom:6px;"></div>
+      <div class="cal-grid" id="cal-dias"></div>
+    </div>
+
+    <!-- Slots -->
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <div class="bebas" id="slots-tit" style="font-size:18px;color:#F5F0E8;">Selecione um dia</div>
+        <button onclick="abrirModal()" style="background:linear-gradient(135deg,#9A7A2E,#C9A84C);border:none;border-radius:4px;padding:8px 14px;font-family:'Bebas Neue',sans-serif;font-size:14px;color:#0A0A0A;">+ MARCAR</button>
+      </div>
+      <div id="slots"><div style="text-align:center;padding:30px;color:#888;">Selecione um dia no calendario</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div id="modal" style="display:none;" class="overlay">
+  <div class="card" style="border-color:#C9A84C;max-width:380px;width:100%;padding:28px;">
+    <div class="bebas" style="font-size:22px;color:#C9A84C;margin-bottom:20px;">MARCAR HORARIO</div>
+    <div style="margin-bottom:12px;"><label class="lbl">Nome do Cliente</label><input id="m-nome" placeholder="Nome"/></div>
+    <div style="margin-bottom:12px;"><label class="lbl">WhatsApp</label><input id="m-tel" placeholder="(31) 9 9999-9999"/></div>
+    <div style="margin-bottom:12px;"><label class="lbl">Servico</label><select id="m-serv"><option value="">Selecione</option></select></div>
+    <div style="margin-bottom:20px;"><label class="lbl">Horario</label><select id="m-hor"><option value="">Selecione</option></select></div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn-ghost" style="flex:1;" onclick="fecharModal()">Cancelar</button>
+      <button onclick="confirmarManual()" style="flex:2;background:linear-gradient(135deg,#9A7A2E,#C9A84C);border:none;border-radius:4px;padding:12px;font-family:'Bebas Neue',sans-serif;font-size:18px;color:#0A0A0A;">CONFIRMAR</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+firebase.initializeApp({apiKey:"AIzaSyDqC0bDjdK2EkAJCIidEYrU01tcgPRmrio",authDomain:"barbearia-juninho-e-mirinho.firebaseapp.com",databaseURL:"https://barbearia-juninho-e-mirinho-default-rtdb.firebaseio.com",projectId:"barbearia-juninho-e-mirinho",storageBucket:"barbearia-juninho-e-mirinho.firebasestorage.app",messagingSenderId:"942836608130",appId:"1:942836608130:web:1e6bca4780f314b88d189b"});
+var db=firebase.database(),agRef=db.ref('equipe');
+
+var FOTOS={
+  Lucas:"data:image/jpeg;base64,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",
+  Mirinho:"data:image/jpeg;base64,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",
+  Vitor:"data:image/jpeg;base64,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"
+};
+
+var COLAB=[
+  {nome:'Lucas',wa:'5531998203264'},
+  {nome:'Mirinho',wa:'5531998191077'},
+  {nome:'Vitor',wa:'5531985365556'}
+];
+var SENHAS={Lucas:'lucas2024',Mirinho:'mirinho2024',Vitor:'vitor2024',Juninho:'Juninho1404'};
+var SERVICOS=[{id:0,nome:'Corte',preco:35,duracao:30},{id:1,nome:'Barba',preco:30,duracao:30},{id:2,nome:'Sobrancelha',preco:20,duracao:15},{id:3,nome:'Pezinho',preco:20,duracao:15},{id:4,nome:'Alisamento',preco:35,duracao:30},{id:5,nome:'Tintura',preco:35,duracao:30},{id:6,nome:'Luzes',preco:65,duracao:30},{id:7,nome:'Progressiva',preco:65,duracao:30},{id:8,nome:'Nevou',preco:140,duracao:30}];
+var HORARIOS=[];for(var t=9*60;t<19*60;t+=30)HORARIOS.push(('0'+Math.floor(t/60)).slice(-2)+':'+('0'+(t%60)).slice(-2));
+var MESES=['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+var DS=['Dom','Seg','Ter','Qua','Qui','Sex','Sab'];
+var ags={},sel=[],userLogado='',isDono=false,filtroColab='todos',mesA=new Date().getMonth(),anoA=new Date().getFullYear(),diaA=hojeISO(),barbSel='',userSel='';
+
+agRef.on('value',function(snap){ags=snap.val()||{};if(document.getElementById('t-painel').classList.contains('ativa')){renderResumo();renderFatMensal();renderCal();renderSlots();}});
+
+function hojeISO(){return new Date().toISOString().split('T')[0];}
+function fmtD(d){if(!d)return'';var p=d.split('-');return p[2]+'/'+p[1]+'/'+p[0];}
+function nomeD(d){return DS[new Date(d+'T12:00:00').getDay()];}
+function isDom(d){return new Date(d+'T12:00:00').getDay()===0;}
+function goTela(id){document.querySelectorAll('.tela').forEach(function(t){t.classList.remove('ativa');});document.getElementById(id).classList.add('ativa');}
+
+function selUser(nome){
+  userSel=nome;
+  ['Lucas','Mirinho','Vitor','Juninho'].forEach(function(b){var btn=document.getElementById('btn-'+b);if(!btn)return;btn.style.borderColor=b===nome?'#C9A84C':(b==='Juninho'?'#9A7A2E':'#2A2A2A');btn.style.color=b===nome?'#C9A84C':(b==='Juninho'?'#C9A84C':'#888');});
+}
+
+function fazerLogin(){
+  var err=document.getElementById('senha-err');
+  if(!userSel){err.textContent='Selecione seu nome!';err.style.display='block';return;}
+  if(document.getElementById('senha-inp').value===SENHAS[userSel]){
+    userLogado=userSel;isDono=userSel==='Juninho';err.style.display='none';
+    document.getElementById('nome-logado').textContent=userLogado.toUpperCase();
+    document.getElementById('badge-dono').style.display=isDono?'block':'none';
+    document.getElementById('fat-card').style.display=isDono?'block':'none';
+    if(isDono){
+      filtroColab='todos';
+      document.getElementById('filtro-div').style.display='block';
+      var tabs=document.getElementById('filtro-tabs');
+      tabs.innerHTML='<button class="tab-btn ativo" onclick="filtrar('todos',this)">TODOS</button>';
+      COLAB.forEach(function(c){tabs.innerHTML+='<button class="tab-btn" onclick="filtrar(''+c.nome+'',this)">'+c.nome.toUpperCase()+'</button>';});
+    }else{filtroColab=userLogado;document.getElementById('filtro-div').style.display='none';}
+    goTela('t-painel');renderResumo();renderFatMensal();renderCal();renderSlots();
+  }else{err.textContent='Senha incorreta!';err.style.display='block';}
+}
+
+function filtrar(colab,el){filtroColab=colab;document.querySelectorAll('.tab-btn').forEach(function(t){t.classList.remove('ativo');});el.classList.add('ativo');renderResumo();renderFatMensal();renderCal();renderSlots();}
+function sair(){userLogado='';isDono=false;userSel='';filtroColab='todos';document.getElementById('senha-inp').value='';document.getElementById('senha-err').style.display='none';goTela('t-login');}
+
+function initAgendar(){
+  barbSel='';sel=[];goTela('t-agendar');
+  var bg=document.getElementById('barbeiros-grid');bg.innerHTML='';
+  COLAB.forEach(function(c){
+    var div=document.createElement('div');
+    div.id='barb-'+c.nome;
+    div.className='barb-card';
+    div.innerHTML='<img class="barb-foto" src="'+FOTOS[c.nome]+'" alt="'+c.nome+'"><div class="bebas" style="font-size:16px;color:#888;letter-spacing:1px;">'+c.nome+'</div>';
+    div.setAttribute('onclick','selBarb("'+c.nome+'")');
+    bg.appendChild(div);
+  });
+  renderSC();
+  var inp=document.getElementById('ag-data');inp.min=hojeISO();inp.value='';
+  document.getElementById('ag-hor').innerHTML='<option value="">Selecione a data</option>';
+  document.getElementById('ag-nome').value='';document.getElementById('ag-tel').value='';document.getElementById('ag-erro').style.display='none';
+}
+
+function selBarb(nome){
+  barbSel=nome;
+  COLAB.forEach(function(c){var div=document.getElementById('barb-'+c.nome);if(div){if(c.nome===nome)div.classList.add('sel');else div.classList.remove('sel');}});
+  if(document.getElementById('ag-data').value)carregarHorarios();
+}
+
+function renderSC(){var html='';SERVICOS.forEach(function(s){var isSel=sel.indexOf(s.id)>=0;html+='<div class="sc'+(isSel?' sel':'')+'" onclick="toggleSC('+s.id+')">';if(isSel)html+='<div style="position:absolute;top:8px;right:8px;width:18px;height:18px;background:#C9A84C;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;color:#0A0A0A;">v</div>';html+='<div style="font-size:14px;color:#F5F0E8;margin-bottom:4px;padding-right:22px;">'+s.nome+'</div><div style="font-size:10px;color:#888;margin-bottom:6px;">'+s.duracao+' min</div><div class="bebas" style="font-size:22px;color:#C9A84C;">R$ '+s.preco+'</div></div>';});document.getElementById('sc-grid').innerHTML=html;atualizarTotal();}
+function toggleSC(id){var idx=sel.indexOf(id);if(idx>=0)sel.splice(idx,1);else sel.push(id);renderSC();if(document.getElementById('ag-data').value)carregarHorarios();}
+function atualizarTotal(){var preco=0,tempo=0;sel.forEach(function(i){preco+=SERVICOS[i].preco;tempo+=SERVICOS[i].duracao;});var bar=document.getElementById('total-bar');if(sel.length>0){bar.style.display='flex';document.getElementById('t-tempo').textContent=tempo+' min';document.getElementById('t-valor').textContent='R$ '+preco;}else bar.style.display='none';}
+function ocupadosBarb(data,barb){var list=[];Object.keys(ags).forEach(function(k){if(ags[k].data===data&&ags[k].barbeiro===barb&&ags[k].status!=='cancelado')list.push(ags[k].horario);});return list;}
+
+function carregarHorarios(){var data=document.getElementById('ag-data').value,el=document.getElementById('ag-hor');el.innerHTML='<option value="">Selecione o horario</option>';if(!data||!barbSel)return;if(isDom(data)){el.innerHTML='<option value="">Domingos fechado!</option>';return;}var oc=ocupadosBarb(data,barbSel),dur=sel.reduce(function(a,i){return a+SERVICOS[i].duracao;},0)||30;HORARIOS.forEach(function(h){if(oc.indexOf(h)>=0)return;var pts=h.split(':'),ini=parseInt(pts[0])*60+parseInt(pts[1]),fim=ini+dur;if(fim>19*60)return;var ok=true;oc.forEach(function(o){var op=o.split(':'),oi=parseInt(op[0])*60+parseInt(op[1]);if(ini<oi+30&&fim>oi)ok=false;});if(ok){var opt=document.createElement('option');opt.value=h;opt.textContent=h;el.appendChild(opt);}});}
+
+function confirmar(){
+  var nome=document.getElementById('ag-nome').value.trim(),tel=document.getElementById('ag-tel').value.trim(),data=document.getElementById('ag-data').value,horario=document.getElementById('ag-hor').value,err=document.getElementById('ag-erro');
+  if(!barbSel){err.textContent='Selecione um barbeiro!';err.style.display='block';return;}
+  if(!nome||!tel||!data||!horario||sel.length===0){err.textContent='Preencha todos os campos!';err.style.display='block';return;}
+  err.style.display='none';
+  var btn=document.getElementById('btn-conf');btn.textContent='AGUARDE...';btn.disabled=true;
+  var sn=sel.map(function(i){return SERVICOS[i].nome;}).join(', '),total=sel.reduce(function(a,i){return a+SERVICOS[i].preco;},0),dur=sel.reduce(function(a,i){return a+SERVICOS[i].duracao;},0);
+  var barbWA=COLAB.find(function(c){return c.nome===barbSel;}).wa;
+  agRef.push({nome:nome,telefone:tel,servicos:sn,data:data,horario:horario,duracao:dur,total:total,barbeiro:barbSel,status:'confirmado',criadoEm:new Date().toISOString()},function(){
+    document.getElementById('suc-det').innerHTML='<p style="color:#C9A84C;margin:6px 0;">✂️ Barbeiro: '+barbSel+'</p><p style="color:#F5F0E8;margin:6px 0;">👤 '+nome+'</p><p style="color:#F5F0E8;margin:6px 0;">'+sn+'</p><p style="color:#C9A84C;margin:6px 0;font-weight:bold;">📅 '+fmtD(data)+' as '+horario+'</p><p style="color:#F5F0E8;margin:6px 0;">'+dur+' min | R$ '+total+'</p>';
+    var msg=encodeURIComponent('Ola! Agendei com '+barbSel+':\n'+nome+'\n'+sn+'\n'+fmtD(data)+' as '+horario+'\nR$ '+total);
+    document.getElementById('suc-wa').href='https://wa.me/'+barbWA+'?text='+msg;
+    btn.textContent='✦ CONFIRMAR AGENDAMENTO ✦';btn.disabled=false;sel=[];barbSel='';goTela('t-sucesso');
+  });
+}
+
+function getAgs(){var list=[];Object.keys(ags).forEach(function(k){var a=ags[k];if(a.status==='cancelado')return;if(!isDono&&a.barbeiro!==userLogado)return;if(isDono&&filtroColab!=='todos'&&a.barbeiro!==filtroColab)return;list.push(Object.assign({fk:k},a));});return list;}
+
+function renderResumo(){var hoje=hojeISO(),qtd=0,fat=0;getAgs().forEach(function(a){if(a.data===hoje){qtd++;fat+=a.total;}});document.getElementById('r-qtd').textContent=qtd;document.getElementById('r-fat').textContent='R$'+fat;}
+
+function renderFatMensal(){
+  var div=document.getElementById('fat-mensal');
+  if(!isDono){div.innerHTML='';return;}
+  var mes=new Date().getMonth(),ano=new Date().getFullYear();
+  var fat={};
+  COLAB.forEach(function(c){fat[c.nome]=0;});
+  Object.keys(ags).forEach(function(k){
+    var a=ags[k];if(a.status==='cancelado')return;
+    var d=new Date(a.data+'T12:00:00');
+    if(d.getMonth()===mes&&d.getFullYear()===ano) fat[a.barbeiro]=(fat[a.barbeiro]||0)+a.total;
+  });
+  var html='';
+  COLAB.forEach(function(c){
+    html+='<div style="background:#111;border:1px solid #2A2A2A;border-radius:8px;padding:12px;text-align:center;">';
+    html+='<img src="'+FOTOS[c.nome]+'" style="width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid #C9A84C;margin-bottom:6px;">';
+    html+='<div style="font-size:12px;color:#888;margin-bottom:2px;">'+c.nome+'</div>';
+    html+='<div class="bebas" style="font-size:22px;color:#C9A84C;">R$'+(fat[c.nome]||0)+'</div>';
+    html+='</div>';
+  });
+  div.innerHTML=html;
+}
+
+function renderCal(){document.getElementById('cal-tit').textContent=MESES[mesA]+' '+anoA;var sem=document.getElementById('cal-sem');sem.innerHTML='';DS.forEach(function(d,i){var el=document.createElement('div');el.style.cssText='text-align:center;font-size:11px;padding:4px 0;color:'+(i===0?'#ff6b6b':'#888');el.textContent=d;sem.appendChild(el);});var cont=document.getElementById('cal-dias');cont.innerHTML='';var primeiro=new Date(anoA,mesA,1),ultimo=new Date(anoA,mesA+1,0);for(var i=0;i<primeiro.getDay();i++)cont.appendChild(document.createElement('div'));for(var d=1;d<=ultimo.getDate();d++){var date=new Date(anoA,mesA,d),iso=date.toISOString().split('T')[0],eDom=date.getDay()===0,eHoje=iso===hojeISO(),eSel=iso===diaA,temAg=getAgs().some(function(a){return a.data===iso;});var el=document.createElement('div');el.style.cssText='background:'+(eSel?'#C9A84C':'transparent')+';border:1px solid '+(eSel?'#C9A84C':eHoje?'#4CAF50':'#2A2A2A')+';border-radius:5px;padding:6px 2px;text-align:center;font-size:13px;color:'+(eSel?'#0A0A0A':eHoje?'#4CAF50':'#F5F0E8')+';cursor:'+(eDom?'default':'pointer')+';opacity:'+(eDom?'0.3':'1')+';min-height:34px;';el.textContent=d;if(temAg){var dot=document.createElement('div');dot.style.cssText='width:5px;height:5px;background:'+(eSel?'#0A0A0A':'#C9A84C')+';border-radius:50%;margin:2px auto 0;';el.appendChild(dot);}if(!eDom){(function(iso2){el.onclick=function(){diaA=iso2;renderCal();renderSlots();};})(iso);}cont.appendChild(el);}}
+function mudaMes(dir){mesA+=dir;if(mesA<0){mesA=11;anoA--;}if(mesA>11){mesA=0;anoA++;}renderCal();}
+
+function renderSlots(){
+  document.getElementById('slots-tit').textContent=nomeD(diaA)+', '+fmtD(diaA);
+  var agsDia=getAgs().filter(function(a){return a.data===diaA;});agsDia.sort(function(a,b){return a.horario.localeCompare(b.horario);});
+  var html='';
+  HORARIOS.forEach(function(h){var ag=agsDia.find(function(a){return a.horario===h;});
+    if(ag){
+      var barbWA=COLAB.find(function(c){return c.nome===ag.barbeiro;});
+      var wa=barbWA?barbWA.wa:'55319';
+      var msg=encodeURIComponent('Ola '+ag.nome+'! Confirmando: '+ag.servicos+' as '+ag.horario);
+      html+='<div class="slot"><div class="slot-h">'+h+'</div><div class="slot-oc"><div>';
+      html+='<div style="color:#F5F0E8;font-size:14px;font-weight:bold;">'+ag.nome+'</div>';
+      html+='<div style="color:#4CAF50;font-size:12px;">'+ag.servicos+' | '+ag.duracao+'min | R$'+ag.total+'</div>';
+      if(isDono)html+='<div style="color:#C9A84C;font-size:11px;">✂️ '+ag.barbeiro+'</div>';
+      if(ag.telefone&&ag.telefone!=='-')html+='<div style="color:#888;font-size:11px;">📱 '+ag.telefone+'</div>';
+      html+='</div><div style="display:flex;gap:5px;">';
+      html+='<a href="https://wa.me/'+wa+'?text='+msg+'" target="_blank" style="background:#25D366;border-radius:4px;padding:6px 10px;color:white;text-decoration:none;font-size:13px;">📲</a>';
+      html+='<button onclick="cancelarAg(''+ag.fk+'')" style="background:transparent;border:1px solid #ff4444;border-radius:4px;padding:6px 10px;color:#ff4444;font-size:13px;">✕</button>';
+      html+='</div></div></div>';
+    }else{html+='<div class="slot"><div class="slot-h">'+h+'</div><div class="slot-livre">Livre</div></div>';}
+  });
+  document.getElementById('slots').innerHTML=html;
+}
+
+function cancelarAg(fk){if(!confirm('Cancelar este agendamento?'))return;db.ref('equipe/'+fk).update({status:'cancelado'});}
+function abrirModal(){var ms=document.getElementById('m-serv');ms.innerHTML='<option value="">Selecione</option>';SERVICOS.forEach(function(s,i){var o=document.createElement('option');o.value=i;o.textContent=s.nome+' R$ '+s.preco;ms.appendChild(o);});var mh=document.getElementById('m-hor');mh.innerHTML='<option value="">Selecione</option>';var barb=isDono?(filtroColab==='todos'?COLAB[0].nome:filtroColab):userLogado,oc=ocupadosBarb(diaA,barb);HORARIOS.filter(function(h){return oc.indexOf(h)<0;}).forEach(function(h){var o=document.createElement('option');o.value=h;o.textContent=h;mh.appendChild(o);});document.getElementById('m-nome').value='';document.getElementById('m-tel').value='';document.getElementById('modal').style.display='flex';}
+function fecharModal(){document.getElementById('modal').style.display='none';}
+function confirmarManual(){var nome=document.getElementById('m-nome').value.trim(),tel=document.getElementById('m-tel').value.trim(),servIdx=document.getElementById('m-serv').value,horario=document.getElementById('m-hor').value;if(!nome||servIdx===''||!horario)return;var s=SERVICOS[parseInt(servIdx)],barb=isDono?(filtroColab==='todos'?COLAB[0].nome:filtroColab):userLogado;agRef.push({nome:nome,telefone:tel||'-',servicos:s.nome,data:diaA,horario:horario,duracao:s.duracao,total:s.preco,barbeiro:barb,status:'confirmado',criadoEm:new Date().toISOString()},function(){fecharModal();});}
+
+initAgendar();
+</script>
+</body>
+</html>
