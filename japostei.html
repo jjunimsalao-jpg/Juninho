@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>JáPostei – Descubra, Viralize, Compartilhe!</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d1117; --bg2: #161b22; --bg3: #1c2330;
+    --blue: #1877f2; --blue-light: #3d9cf5;
+    --orange: #ff6b00; --orange-light: #ff9a3c;
+    --white: #f0f6ff; --muted: #8b949e; --green: #2ea043;
+    --card: #1c2330; --border: #30363d;
+    --radius: 16px; --radius-sm: 10px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { background:var(--bg); color:var(--white); font-family:'Nunito',sans-serif; min-height:100vh; max-width:430px; margin:0 auto; overflow-x:hidden; }
+
+  #splash { position:fixed; inset:0; z-index:999; background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; transition:opacity 0.5s; }
+  #splash h1 { font-family:'Bebas Neue',sans-serif; font-size:52px; letter-spacing:2px; background:linear-gradient(135deg,var(--blue-light),var(--orange)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  #splash p { color:var(--muted); font-size:13px; font-weight:700; letter-spacing:1px; }
+  #splash .loader { width:200px; height:4px; background:var(--bg3); border-radius:99px; overflow:hidden; margin-top:20px; }
+  #splash .loader-bar { height:100%; background:linear-gradient(90deg,var(--blue),var(--orange)); border-radius:99px; animation:load 2s ease forwards; }
+
+  .header { position:sticky; top:0; z-index:100; background:rgba(13,17,23,0.95); backdrop-filter:blur(20px); padding:12px 16px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); }
+  .header-logo { display:flex; align-items:center; gap:8px; }
+  .header-logo h2 { font-family:'Bebas Neue',sans-serif; font-size:24px; letter-spacing:1px; background:linear-gradient(135deg,var(--blue-light),var(--orange)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  .header-date { font-size:11px; color:var(--muted); font-weight:700; }
+
+  .tabs { display:flex; background:var(--bg2); border-bottom:1px solid var(--border); overflow-x:auto; scrollbar-width:none; }
+  .tabs::-webkit-scrollbar { display:none; }
+  .tab { flex:1; min-width:72px; padding:10px 6px; text-align:center; font-size:10px; font-weight:800; color:var(--muted); cursor:pointer; border-bottom:3px solid transparent; transition:all 0.2s; white-space:nowrap; }
+  .tab.active { color:var(--orange); border-bottom-color:var(--orange); }
+  .tab-icon { font-size:16px; display:block; margin-bottom:2px; }
+
+  .screen { display:none; padding:14px; animation:fadeUp 0.3s ease; }
+  .screen.active { display:block; }
+
+  .section-title { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:1px; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+  .badge { font-family:'Nunito',sans-serif; font-size:10px; font-weight:800; background:var(--orange); color:white; padding:2px 8px; border-radius:99px; }
+
+  .nicho-filter { display:flex; gap:8px; overflow-x:auto; scrollbar-width:none; margin-bottom:14px; padding-bottom:4px; }
+  .nicho-filter::-webkit-scrollbar { display:none; }
+  .nf-chip { flex-shrink:0; padding:6px 14px; border-radius:99px; font-size:12px; font-weight:800; border:2px solid var(--border); color:var(--muted); cursor:pointer; transition:all 0.2s; background:var(--bg3); }
+  .nf-chip.active { border-color:var(--orange); color:var(--orange); background:rgba(255,107,0,0.1); }
+
+  .progress-wrap { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:14px; margin-bottom:14px; display:flex; align-items:center; gap:12px; }
+  .progress-bar { height:6px; background:var(--bg3); border-radius:99px; overflow:hidden; margin-top:6px; }
+  .progress-bar-fill { height:100%; background:linear-gradient(90deg,var(--orange),var(--orange-light)); border-radius:99px; transition:width 0.5s; }
+
+  .count-bar { display:flex; gap:8px; margin-bottom:14px; overflow-x:auto; scrollbar-width:none; }
+  .count-bar::-webkit-scrollbar { display:none; }
+  .count-item { flex-shrink:0; background:var(--card); border:1px solid var(--border); border-radius:var(--radius-sm); padding:8px 14px; text-align:center; }
+  .count-num { font-family:'Bebas Neue',sans-serif; font-size:20px; color:var(--orange); }
+  .count-label { font-size:10px; color:var(--muted); font-weight:700; }
+
+  .video-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; margin-bottom:12px; transition:transform 0.15s,border-color 0.2s; }
+  .video-card:active { transform:scale(0.99); }
+
+  .video-thumb { position:relative; height:150px; overflow:hidden; }
+  .video-thumb-bg { width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:64px; }
+  .play-overlay { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; }
+  .play-circle { width:50px; height:50px; background:rgba(0,0,0,0.7); border-radius:50%; display:flex; align-items:center; justify-content:center; border:2px solid white; }
+  .play-circle::after { content:'▶'; font-size:16px; margin-left:3px; }
+  .nicho-tag { position:absolute; top:8px; left:8px; font-size:10px; font-weight:800; padding:3px 10px; border-radius:99px; backdrop-filter:blur(10px); }
+  .viral-tag { position:absolute; top:8px; right:8px; font-size:10px; font-weight:800; padding:3px 8px; border-radius:99px; background:rgba(255,50,50,0.85); color:white; animation:pulse 1.5s infinite; }
+  .stats-row { position:absolute; bottom:8px; left:8px; right:8px; display:flex; gap:6px; }
+  .stat-chip { background:rgba(0,0,0,0.75); border-radius:99px; padding:3px 8px; font-size:10px; font-weight:800; backdrop-filter:blur(10px); }
+
+  .video-body { padding:12px; }
+  .video-title { font-size:13px; font-weight:800; line-height:1.4; margin-bottom:8px; }
+  .video-meta { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; align-items:center; }
+  .meta-chip { font-size:10px; font-weight:700; padding:2px 8px; border-radius:99px; background:var(--bg3); border:1px solid var(--border); }
+  .meta-hora { color:var(--green); border-color:rgba(46,160,67,0.3); }
+  .meta-source { color:var(--muted); }
+  .meta-trend { color:#ff6b6b; border-color:rgba(255,107,107,0.3); }
+
+  .legenda-box { background:var(--bg); border-radius:var(--radius-sm); padding:10px 12px; font-size:12px; color:var(--muted); line-height:1.5; border:1px solid var(--border); margin-bottom:10px; }
+  .legenda-label { font-size:10px; font-weight:800; color:var(--orange); margin-bottom:4px; }
+  .hashtags { font-size:11px; color:var(--blue-light); font-weight:700; margin-top:6px; }
+
+  .card-actions { display:flex; gap:8px; }
+  .btn-link { flex:1; background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px; font-size:12px; font-weight:800; color:var(--blue-light); font-family:'Nunito',sans-serif; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px; }
+  .btn-compartilhar { flex:2; background:linear-gradient(135deg,var(--blue),var(--blue-light)); color:white; border:none; border-radius:var(--radius-sm); padding:10px; font-size:13px; font-weight:900; font-family:'Nunito',sans-serif; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; }
+  .btn-compartilhar:active { opacity:0.8; }
+  .btn-fav { width:40px; height:40px; background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius-sm); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; }
+  .btn-fav.favoritado { background:rgba(255,107,0,0.2); border-color:var(--orange); }
+
+  .modal-overlay { position:fixed; inset:0; z-index:200; background:rgba(0,0,0,0.7); backdrop-filter:blur(8px); display:none; align-items:flex-end; }
+  .modal-overlay.open { display:flex; }
+  .share-modal { width:100%; max-width:430px; margin:0 auto; background:var(--bg2); border-radius:24px 24px 0 0; padding:20px; animation:slideUp 0.3s cubic-bezier(.34,1.56,.64,1); }
+  .modal-handle { width:40px; height:4px; background:var(--border); border-radius:99px; margin:0 auto 18px; }
+  .modal-title { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:1px; margin-bottom:4px; }
+  .modal-subtitle { font-size:12px; color:var(--muted); font-weight:600; margin-bottom:16px; }
+  .modal-video-title { font-size:13px; font-weight:800; color:var(--orange-light); margin-bottom:16px; padding:10px 12px; background:var(--bg3); border-radius:var(--radius-sm); }
+  .legenda-copy-box { background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px; margin-bottom:10px; max-height:120px; overflow-y:auto; }
+  .legenda-copy-label { font-size:10px; font-weight:800; color:var(--orange); margin-bottom:6px; }
+  .legenda-copy-text { font-size:12px; color:var(--white); line-height:1.5; }
+  .btn-copy-legenda { width:100%; background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px; color:var(--white); font-family:'Nunito',sans-serif; font-size:13px; font-weight:800; cursor:pointer; margin-bottom:10px; }
+  .share-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:10px; }
+  .share-btn { display:flex; flex-direction:column; align-items:center; gap:6px; padding:14px 8px; border-radius:var(--radius); border:2px solid var(--border); cursor:pointer; transition:all 0.2s; background:var(--bg3); }
+  .share-btn:active { transform:scale(0.95); }
+  .share-btn .s-icon { font-size:28px; }
+  .share-btn .s-name { font-size:11px; font-weight:800; }
+  .share-btn.whatsapp { border-color:rgba(37,211,102,0.4); }
+  .share-btn.instagram { border-color:rgba(225,48,108,0.4); }
+  .share-btn.tiktok { border-color:rgba(255,255,255,0.15); }
+  .btn-fechar-modal { width:100%; background:transparent; border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px; color:var(--muted); font-family:'Nunito',sans-serif; font-size:13px; font-weight:700; cursor:pointer; }
+
+  .historico-item { display:flex; align-items:center; gap:12px; background:var(--card); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px; margin-bottom:8px; }
+  .historico-title { font-size:13px; font-weight:800; }
+  .historico-meta { font-size:11px; color:var(--muted); font-weight:600; margin-top:2px; }
+
+  .config-section { margin-bottom:22px; }
+  .config-label { font-size:10px; font-weight:800; color:var(--orange); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; }
+  .config-item { display:flex; align-items:center; justify-content:space-between; background:var(--card); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px 14px; margin-bottom:8px; }
+  .config-item-left { display:flex; align-items:center; gap:10px; }
+  .config-item-text { font-size:13px; font-weight:700; }
+  .config-item-sub { font-size:11px; color:var(--muted); font-weight:600; }
+  .toggle { width:44px; height:24px; background:var(--border); border-radius:99px; position:relative; cursor:pointer; transition:background 0.2s; }
+  .toggle.on { background:var(--orange); }
+  .toggle::after { content:''; position:absolute; top:3px; left:3px; width:18px; height:18px; background:white; border-radius:50%; transition:left 0.2s; }
+  .toggle.on::after { left:23px; }
+
+  .empty-state { text-align:center; padding:50px 20px; color:var(--muted); }
+  .plano-header { background:linear-gradient(135deg,#0f2744,#1a1a2e); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:14px; display:flex; align-items:center; gap:12px; }
+  .btn-gerar { width:100%; background:linear-gradient(135deg,var(--orange),var(--orange-light)); color:white; border:none; border-radius:var(--radius); padding:14px; font-size:15px; font-weight:900; font-family:'Nunito',sans-serif; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:16px; box-shadow:0 4px 20px rgba(255,107,0,0.3); }
+  .btn-gerar:active { opacity:0.9; }
+
+  .toast { position:fixed; bottom:85px; left:50%; transform:translateX(-50%); background:var(--green); color:white; padding:10px 20px; border-radius:99px; font-size:13px; font-weight:800; z-index:300; opacity:0; transition:opacity 0.3s; pointer-events:none; white-space:nowrap; }
+  .toast.show { opacity:1; }
+
+  .bottom-nav { position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:430px; background:rgba(22,27,34,0.97); backdrop-filter:blur(20px); border-top:1px solid var(--border); display:flex; padding:8px 0 env(safe-area-inset-bottom,8px); z-index:100; }
+  .nav-item { flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; padding:6px; cursor:pointer; }
+  .nav-icon { font-size:20px; }
+  .nav-label { font-size:10px; font-weight:800; color:var(--muted); }
+  .nav-item.active .nav-label { color:var(--orange); }
+  .pb { padding-bottom:80px; }
+
+  @keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+  @keyframes load { from{width:0%} to{width:100%} }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+</style>
+</head>
+<body>
+
+<div id="splash">
+  <div style="text-align:center">
+    <div style="font-size:72px">🚀</div>
+    <h1>JáPostei</h1>
+    <p>DESCUBRA · VIRALIZE · COMPARTILHE</p>
+  </div>
+  <div class="loader"><div class="loader-bar"></div></div>
+</div>
+
+<div class="header">
+  <div class="header-logo"><span>🚀</span><h2>JáPostei</h2></div>
+  <div class="header-date" id="headerDate"></div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('plano',this)"><span class="tab-icon">📅</span>PLANO</div>
+  <div class="tab" onclick="switchTab('videos',this)"><span class="tab-icon">🎬</span>VÍDEOS</div>
+  <div class="tab" onclick="switchTab('favoritos',this)"><span class="tab-icon">⭐</span>SALVOS</div>
+  <div class="tab" onclick="switchTab('historico',this)"><span class="tab-icon">📋</span>HISTÓRICO</div>
+  <div class="tab" onclick="switchTab('config',this)"><span class="tab-icon">⚙️</span>CONFIG</div>
+</div>
+
+<!-- PLANO -->
+<div class="screen active pb" id="screen-plano">
+  <div class="plano-header">
+    <div style="font-size:40px">🚀</div>
+    <div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:1px;color:var(--blue-light)">PLANO DO DIA</div>
+      <div style="font-size:12px;color:var(--muted);font-weight:600">IA selecionou os melhores pra você</div>
+    </div>
+  </div>
+  <div class="progress-wrap">
+    <div style="font-size:32px">📊</div>
+    <div style="flex:1">
+      <div style="font-size:13px;font-weight:800">Meta diária de posts</div>
+      <div style="font-size:11px;color:var(--muted);font-weight:600" id="progressLabel">0 de 4 postados</div>
+      <div class="progress-bar"><div class="progress-bar-fill" id="progressFill" style="width:0%"></div></div>
+    </div>
+  </div>
+  <div class="count-bar" id="countBar"></div>
+  <button class="btn-gerar" onclick="gerarPlano()">⚡ GERAR NOVO PLANO DO DIA</button>
+  <div id="planoCards"></div>
+</div>
+
+<!-- VÍDEOS -->
+<div class="screen pb" id="screen-videos">
+  <div class="section-title">🎬 Todos os Vídeos <span class="badge" id="totalBadge">50</span></div>
+  <div class="nicho-filter">
+    <div class="nf-chip active" onclick="filtrarNicho('todos',this)">🌟 Todos</div>
+    <div class="nf-chip" onclick="filtrarNicho('motivacao',this)">🔥 Motivação</div>
+    <div class="nf-chip" onclick="filtrarNicho('humor',this)">😂 Humor</div>
+    <div class="nf-chip" onclick="filtrarNicho('futebol',this)">⚽ Futebol</div>
+    <div class="nf-chip" onclick="filtrarNicho('barbearia',this)">✂️ Barbearia</div>
+    <div class="nf-chip" onclick="filtrarNicho('lifestyle',this)">💎 Lifestyle</div>
+    <div class="nf-chip" onclick="filtrarNicho('negocios',this)">💼 Negócios</div>
+  </div>
+  <div id="videosCards"></div>
+</div>
+
+<!-- SALVOS -->
+<div class="screen pb" id="screen-favoritos">
+  <div class="section-title">⭐ Salvos</div>
+  <div id="favoritosLista"></div>
+</div>
+
+<!-- HISTÓRICO -->
+<div class="screen pb" id="screen-historico">
+  <div class="section-title">📋 Histórico</div>
+  <div id="historicoLista"></div>
+</div>
+
+<!-- CONFIG -->
+<div class="screen pb" id="screen-config">
+  <div class="section-title">⚙️ Configurações</div>
+  <div class="config-section">
+    <div class="config-label">Notificações</div>
+    <div class="config-item">
+      <div class="config-item-left"><span style="font-size:20px">🔔</span><div><div class="config-item-text">Lembrete diário</div><div class="config-item-sub">Aviso às 09h com conteúdo do dia</div></div></div>
+      <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+    </div>
+    <div class="config-item">
+      <div class="config-item-left"><span style="font-size:20px">⚡</span><div><div class="config-item-text">Viral detectado</div><div class="config-item-sub">Alerta quando surgir vídeo bombando</div></div></div>
+      <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+    </div>
+  </div>
+  <div class="config-section">
+    <div class="config-label">Meta diária</div>
+    <div class="config-item">
+      <div class="config-item-left"><span style="font-size:20px">🎯</span><div class="config-item-text">Posts por dia</div></div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <button onclick="ajustarMeta(-1)" style="background:var(--bg3);border:1px solid var(--border);color:var(--white);width:28px;height:28px;border-radius:50%;font-size:16px;cursor:pointer">−</button>
+        <span id="metaNum" style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--orange)">4</span>
+        <button onclick="ajustarMeta(1)" style="background:var(--bg3);border:1px solid var(--border);color:var(--white);width:28px;height:28px;border-radius:50%;font-size:16px;cursor:pointer">+</button>
+      </div>
+    </div>
+  </div>
+  <div class="config-section">
+    <div class="config-label">Sobre</div>
+    <div class="config-item">
+      <div class="config-item-left"><span style="font-size:20px">🚀</span><div><div class="config-item-text">JáPostei v2.0</div><div class="config-item-sub">50 vídeos · 6 nichos · Descubra, Viralize, Compartilhe</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="shareModal" onclick="fecharModal(event)">
+  <div class="share-modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title">📤 Compartilhar Agora</div>
+    <div class="modal-subtitle">Copie a legenda e escolha onde postar</div>
+    <div class="modal-video-title" id="modalVideoTitle"></div>
+    <div class="legenda-copy-box">
+      <div class="legenda-copy-label">📝 LEGENDA PRONTA</div>
+      <div class="legenda-copy-text" id="modalLegenda"></div>
+    </div>
+    <button class="btn-copy-legenda" onclick="copiarLegenda()">📋 Copiar Legenda + Hashtags</button>
+    <div class="share-grid">
+      <div class="share-btn whatsapp" onclick="compartilhar('WhatsApp')"><span class="s-icon">💬</span><span class="s-name" style="color:#25d366">WhatsApp</span></div>
+      <div class="share-btn instagram" onclick="compartilhar('Instagram')"><span class="s-icon">📸</span><span class="s-name" style="color:#e1306c">Instagram</span></div>
+      <div class="share-btn tiktok" onclick="compartilhar('TikTok')"><span class="s-icon">🎵</span><span class="s-name">TikTok</span></div>
+    </div>
+    <button class="btn-fechar-modal" onclick="fecharModalBtn()">Fechar</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="bottom-nav">
+  <div class="nav-item active" onclick="switchTab('plano',null);setNav(this)"><span class="nav-icon">📅</span><span class="nav-label">Plano</span></div>
+  <div class="nav-item" onclick="switchTab('videos',null);setNav(this)"><span class="nav-icon">🎬</span><span class="nav-label">Vídeos</span></div>
+  <div class="nav-item" onclick="switchTab('favoritos',null);setNav(this)"><span class="nav-icon">⭐</span><span class="nav-label">Salvos</span></div>
+  <div class="nav-item" onclick="switchTab('historico',null);setNav(this)"><span class="nav-icon">📋</span><span class="nav-label">Histórico</span></div>
+  <div class="nav-item" onclick="switchTab('config',null);setNav(this)"><span class="nav-icon">⚙️</span><span class="nav-label">Config</span></div>
+</div>
+
+<script>
+const VIDEOS = [
+  // MOTIVAÇÃO (10)
+  {id:1,nicho:'motivacao',emoji:'💪',nl:'🔥 Motivação',titulo:'5 hábitos que vão mudar sua vida em 30 dias',src:'YouTube',views:'2.4M',likes:'180K',hora:'09:00',trend:true,legenda:'Tem um hábito que mudou TUDO pra mim ✅\n\nSe você quer crescer na vida, precisa ver isso.\n\nVai lá no perfil 👆',ht:'#motivacao #habitos #crescimento #mentalidade #sucesso',url:'https://youtube.com/results?search_query=5+habitos+mudar+vida'},
+  {id:2,nicho:'motivacao',emoji:'🌟',nl:'🔥 Motivação',titulo:'Como sair da zona de conforto de vez por todas',src:'YouTube',views:'3.8M',likes:'210K',hora:'08:00',trend:true,legenda:'Você tá esperando o momento certo?\n\nEsse vídeo vai te dar o empurrão que faltava 💪\n\nComenta "EU VOU" 👇',ht:'#motivacao #zonaDeConforto #mudança #sucesso #mentalidade',url:'https://youtube.com/results?search_query=sair+zona+conforto'},
+  {id:3,nicho:'motivacao',emoji:'🔥',nl:'🔥 Motivação',titulo:'O discurso que mudou a vida de milhões de pessoas',src:'YouTube',views:'12M',likes:'950K',hora:'07:00',trend:true,legenda:'Às vezes você só precisa ouvir as palavras certas ❤️‍🔥\n\nSalva pra quando precisar de força!\n\nComenta o que sentiu 👇',ht:'#motivacao #discurso #inspiracao #força #superacao',url:'https://youtube.com/results?search_query=discurso+motivacional+viral'},
+  {id:4,nicho:'motivacao',emoji:'🧠',nl:'🔥 Motivação',titulo:'Ciência da disciplina — como criar sem força de vontade',src:'YouTube',views:'5.1M',likes:'320K',hora:'06:30',trend:false,legenda:'Não é falta de força de vontade. É falta de método! 🧠\n\nSalva e compartilha com quem precisa 👇',ht:'#disciplina #habitos #produtividade #mentalidade #ciencia',url:'https://youtube.com/results?search_query=ciencia+disciplina+habitos'},
+  {id:5,nicho:'motivacao',emoji:'💰',nl:'🔥 Motivação',titulo:'Por que ricos ficam mais ricos — a verdade que não te contaram',src:'YouTube',views:'8.3M',likes:'560K',hora:'10:00',trend:true,legenda:'A maioria das pessoas não sabe disso... 💰\n\nAssistiu e ficou chocado? Comenta! 👇',ht:'#dinheiro #financas #riqueza #mentalidade #sucesso',url:'https://youtube.com/results?search_query=por+que+ricos+ficam+mais+ricos'},
+  {id:6,nicho:'motivacao',emoji:'⏰',nl:'🔥 Motivação',titulo:'Acordei às 5h por 30 dias — o que aconteceu',src:'YouTube',views:'6.7M',likes:'410K',hora:'05:30',trend:false,legenda:'Tentei isso por 30 dias e mudou TUDO ⏰\n\nQuem já testou? Comenta sua experiência 👇',ht:'#acorde5horas #produtividade #rotina #habitos #manha',url:'https://youtube.com/results?search_query=acordar+5+horas+30+dias'},
+  {id:7,nicho:'motivacao',emoji:'🏆',nl:'🔥 Motivação',titulo:'História de superação que vai te fazer chorar',src:'YouTube',views:'18M',likes:'1.4M',hora:'11:00',trend:true,legenda:'Essa história me deixou sem palavras 🏆❤️\n\nSe acha que tá difícil, assiste isso.\n\nCompartilha com quem precisa 👇',ht:'#superacao #historia #inspiracao #emocao #motivacao',url:'https://youtube.com/results?search_query=historia+superacao+viral'},
+  {id:8,nicho:'motivacao',emoji:'🎯',nl:'🔥 Motivação',titulo:'Método de metas que realmente funciona — comprovado',src:'YouTube',views:'4.2M',likes:'280K',hora:'09:30',trend:false,legenda:'Parei de fazer metas que não funcionavam quando aprendi isso 🎯\n\nAnota esse método! Salva o vídeo 👆',ht:'#metas #produtividade #planejamento #sucesso #metodo',url:'https://youtube.com/results?search_query=metodo+metas+que+funcionam'},
+  {id:9,nicho:'motivacao',emoji:'💡',nl:'🔥 Motivação',titulo:'O segredo dos homens bem-sucedidos que ninguém fala',src:'YouTube',views:'9.5M',likes:'720K',hora:'08:30',trend:true,legenda:'Levei anos pra entender isso 💡\n\nConcorda? Comenta aqui! 👇',ht:'#sucesso #segredo #mentalidade #crescimento #homens',url:'https://youtube.com/results?search_query=segredo+homens+bem+sucedidos'},
+  {id:10,nicho:'motivacao',emoji:'🚀',nl:'🔥 Motivação',titulo:'Você é mais forte do que imagina — prova disso',src:'YouTube',views:'7.1M',likes:'490K',hora:'07:30',trend:true,legenda:'Esse vídeo me deu arrepio do começo ao fim 🚀\n\nSe tá passando por momento difícil, assiste agora.\n\nCompartilha com quem precisa 👇',ht:'#força #motivacao #superacao #inspiracao #voce',url:'https://youtube.com/results?search_query=voce+mais+forte+motivacao'},
+  // HUMOR (10)
+  {id:11,nicho:'humor',emoji:'😂',nl:'😂 Humor',titulo:'Cliente pedindo corte diferente vs o que o barbeiro faz',src:'TikTok',views:'5.1M',likes:'420K',hora:'19:00',trend:true,legenda:'Isso acontece TODO DIA na barbearia 😂😂😂\n\nMarca o amigo aqui 👇',ht:'#humor #barbearia #barbeiro #corte #viralzinho #risos',url:'https://tiktok.com/search?q=cliente+barbeiro+engracado'},
+  {id:12,nicho:'humor',emoji:'🤣',nl:'😂 Humor',titulo:'Quando o cliente diz que quer "só uma limpadinha"',src:'TikTok',views:'6.2M',likes:'510K',hora:'20:00',trend:true,legenda:'Todo barbeiro sabe dessa dor 😅😂\n\nMarca quem sempre faz isso! 👇',ht:'#humor #barbeiro #barbearia #viral #tiktokbrasil #cliente',url:'https://tiktok.com/search?q=limpadinha+barbeiro+engracado'},
+  {id:13,nicho:'humor',emoji:'😅',nl:'😂 Humor',titulo:'Pegadinha mais engraçada do ano — caiu todo mundo',src:'TikTok',views:'14M',likes:'1.2M',hora:'21:00',trend:true,legenda:'Caí na risada demais com esse 😅😂\n\nMarca quem você faria isso! 👇',ht:'#pegadinha #humor #viral #risos #tiktok #engracado',url:'https://tiktok.com/search?q=pegadinha+viral+2025'},
+  {id:14,nicho:'humor',emoji:'🎭',nl:'😂 Humor',titulo:'Imitação perfeita de sotaques brasileiros',src:'YouTube',views:'8.9M',likes:'730K',hora:'18:30',trend:false,legenda:'O nordestino me matou de rir 🎭😂\n\nQual sotaque ele acertou mais? Comenta! 👇',ht:'#sotaque #humor #brasil #nordeste #imitacao #risos',url:'https://youtube.com/results?search_query=imitacao+sotaques+brasileiros'},
+  {id:15,nicho:'humor',emoji:'🐶',nl:'😂 Humor',titulo:'Cachorros sendo os melhores atores do mundo',src:'YouTube',views:'11M',likes:'890K',hora:'17:00',trend:true,legenda:'Os cachorros são melhores que qualquer ator 🐶😂\n\nQual foi o mais engraçado? Comenta o minuto! 👇',ht:'#cachorro #humor #engracado #pets #viral #risos',url:'https://youtube.com/results?search_query=cachorros+engracados+compilacao'},
+  {id:16,nicho:'humor',emoji:'😆',nl:'😂 Humor',titulo:'Reação de crianças ao comer limão pela primeira vez',src:'YouTube',views:'22M',likes:'1.8M',hora:'16:00',trend:true,legenda:'Esses bebês são demais 😆😭\n\nNão consegui parar de rir! Marca quem quer ver isso 👇',ht:'#criancas #limao #reacao #engracado #viral #bebe',url:'https://youtube.com/results?search_query=criancas+comendo+limao+reacao'},
+  {id:17,nicho:'humor',emoji:'🧔',nl:'😂 Humor',titulo:'Barbeiros reagindo a cortes horríveis do Instagram',src:'YouTube',views:'4.7M',likes:'380K',hora:'19:30',trend:false,legenda:'A cara deles assistindo esses cortes 😭😂\n\nQual foi o pior que você já viu? Comenta! 👇',ht:'#barbeiro #cortes #reacao #humor #barbearia #instagram',url:'https://youtube.com/results?search_query=barbeiros+reagindo+cortes+horriveis'},
+  {id:18,nicho:'humor',emoji:'🎪',nl:'😂 Humor',titulo:'Fail compilation — quedas mais épicas do mês',src:'YouTube',views:'9.3M',likes:'760K',hora:'22:00',trend:true,legenda:'Não deveria dar risada mas não consigo parar 😭😂\n\nQual foi o mais épico? Comenta o número! 👇',ht:'#fail #quedas #humor #viral #compilacao #engracado',url:'https://youtube.com/results?search_query=fail+compilation+brasil+2025'},
+  {id:19,nicho:'humor',emoji:'🤡',nl:'😂 Humor',titulo:'Stand up comedy — melhor trecho do show viral',src:'YouTube',views:'16M',likes:'1.3M',hora:'21:30',trend:true,legenda:'Esse comediante é incrível 🤡😂\n\nQuem você indicaria pra ver esse show? Marca aqui! 👇',ht:'#standup #comedy #humor #risada #viral #show',url:'https://youtube.com/results?search_query=stand+up+comedy+viral+brasil'},
+  {id:20,nicho:'humor',emoji:'😹',nl:'😂 Humor',titulo:'Gatos sendo dramáticos — os melhores momentos',src:'TikTok',views:'19M',likes:'1.6M',hora:'20:30',trend:true,legenda:'Os gatos são os maiores atores do mundo 😹\n\nMarca quem tem gato assim! 👇',ht:'#gatos #cats #humor #viral #engracado #tiktok',url:'https://tiktok.com/search?q=gatos+dramaticos+viral'},
+  // FUTEBOL (8)
+  {id:21,nicho:'futebol',emoji:'⚽',nl:'⚽ Futebol',titulo:'Os 10 gols mais bonitos da semana — você não vai acreditar no #3',src:'YouTube',views:'8.7M',likes:'650K',hora:'21:00',trend:true,legenda:'O gol do #3 me deixou sem reação 🔥⚽\n\nQual foi seu favorito? Comenta aqui 👇',ht:'#futebol #gols #futebolbrasil #esporte #viral',url:'https://youtube.com/results?search_query=melhores+gols+semana+futebol'},
+  {id:22,nicho:'futebol',emoji:'🏆',nl:'⚽ Futebol',titulo:'Análise tática — por que seu time está jogando assim',src:'YouTube',views:'2.1M',likes:'175K',hora:'22:00',trend:false,legenda:'Finalmente alguém explicou DIREITO 📊⚽\n\nConcorda? Comenta! 👇',ht:'#futebol #tatica #analise #campeonato #esportes',url:'https://youtube.com/results?search_query=analise+tatica+futebol+brasileiro'},
+  {id:23,nicho:'futebol',emoji:'🌟',nl:'⚽ Futebol',titulo:'Melhores dribles da semana — humilhou todo mundo',src:'YouTube',views:'12M',likes:'980K',hora:'20:00',trend:true,legenda:'Esse cara humilhou o adversário 😱⚽\n\nQual drible foi mais insano? Comenta! 👇',ht:'#drible #futebol #viral #skills #futebolbrasil',url:'https://youtube.com/results?search_query=melhores+dribles+semana+futebol'},
+  {id:24,nicho:'futebol',emoji:'😱',nl:'⚽ Futebol',titulo:'Confusão no vestiário — jogadores se desentenderam',src:'YouTube',views:'5.4M',likes:'420K',hora:'19:00',trend:true,legenda:'Não esperava isso acontecer dentro do clube 😱⚽\n\nQuem você acha que teve razão? Comenta! 👇',ht:'#futebol #bastidores #polemica #clube #futebolbrasil',url:'https://youtube.com/results?search_query=confusao+vestiario+futebol'},
+  {id:25,nicho:'futebol',emoji:'🥅',nl:'⚽ Futebol',titulo:'Goleiros salvando o impossível — defesas incríveis',src:'YouTube',views:'7.2M',likes:'540K',hora:'21:30',trend:false,legenda:'Como esse goleiro defendeu isso?! 🥅😱\n\nDefesa favorita? Comenta o número! 👇',ht:'#goleiro #defesa #futebol #viral #impossivel #esporte',url:'https://youtube.com/results?search_query=defesas+incriveis+goleiros+futebol'},
+  {id:26,nicho:'futebol',emoji:'📊',nl:'⚽ Futebol',titulo:'Ranking dos melhores jogadores brasileiros hoje',src:'YouTube',views:'3.8M',likes:'290K',hora:'20:30',trend:false,legenda:'Esse ranking vai gerar polêmica 📊⚽\n\nConcorda? Comenta quem você colocaria! 👇',ht:'#ranking #futebol #brasil #jogadores #futebolbrasil',url:'https://youtube.com/results?search_query=ranking+melhores+jogadores+brasileiros+2025'},
+  {id:27,nicho:'futebol',emoji:'🎙️',nl:'⚽ Futebol',titulo:'Narração mais épica do ano — deu arrepio',src:'YouTube',views:'6.1M',likes:'480K',hora:'22:30',trend:true,legenda:'Essa narração deu arrepio do começo ao fim 🎙️⚽\n\nQual narrador é melhor? Comenta! 👇',ht:'#narracao #futebol #gol #arrepio #viral #esporte',url:'https://youtube.com/results?search_query=narracao+epica+gol+futebol'},
+  {id:28,nicho:'futebol',emoji:'💔',nl:'⚽ Futebol',titulo:'Jogador emocionado ao marcar gol pelo time do coração',src:'YouTube',views:'9.8M',likes:'780K',hora:'21:00',trend:true,legenda:'Emocionou até quem não gosta de futebol 💔⚽\n\nAlguma vez você se emocionou assim? Comenta! 👇',ht:'#emocao #futebol #gol #viral #coracao #esporte',url:'https://youtube.com/results?search_query=jogador+emocionado+gol+time+coracao'},
+  // BARBEARIA (8)
+  {id:29,nicho:'barbearia',emoji:'✂️',nl:'✂️ Barbearia',titulo:'Técnica de degradê que todo barbeiro precisa saber',src:'YouTube',views:'1.2M',likes:'95K',hora:'12:00',trend:true,legenda:'Essa técnica mudou o nível dos meus cortes ✂️🔥\n\nSalva esse vídeo!\n\nAgenda pelo link no perfil 👆',ht:'#barbearia #barbeiro #corte #degrade #tecnica #barberlife',url:'https://youtube.com/results?search_query=tecnica+degrade+barbeiro+2025'},
+  {id:30,nicho:'barbearia',emoji:'💈',nl:'✂️ Barbearia',titulo:'Antes e depois incrível: transformação completa do visual',src:'TikTok',views:'4.3M',likes:'380K',hora:'18:00',trend:true,legenda:'Essa transformação deixou todo mundo em choque 💈✨\n\nQuer esse resultado? A gente faz aqui!\n\nChama no WhatsApp! 👇',ht:'#barbearia #transformacao #antes&depois #corte #barberlife',url:'https://tiktok.com/search?q=transformacao+barbearia+antes+depois'},
+  {id:31,nicho:'barbearia',emoji:'🧔',nl:'✂️ Barbearia',titulo:'Como fazer barba perfeita em casa — tutorial completo',src:'YouTube',views:'2.8M',likes:'210K',hora:'10:00',trend:false,legenda:'Aprendi essa técnica e nunca mais errei a barba 🧔✂️\n\nSalva esse tutorial!\n\nAgende seu corte pelo link 👆',ht:'#barba #tutorial #barbeiro #barbearia #grooming #homens',url:'https://youtube.com/results?search_query=como+fazer+barba+perfeita+tutorial'},
+  {id:32,nicho:'barbearia',emoji:'💇',nl:'✂️ Barbearia',titulo:'Cortes masculinos mais pedidos de 2025',src:'YouTube',views:'3.5M',likes:'260K',hora:'11:00',trend:true,legenda:'Esses são os cortes mais pedidos agora 💇‍♂️✂️\n\nQual você prefere? Comenta o número! 👇\n\nAgenda pelo WhatsApp! 👆',ht:'#corte #cabelo #masculino #tendencia #barbearia #2025',url:'https://youtube.com/results?search_query=cortes+cabelo+masculino+2025+tendencia'},
+  {id:33,nicho:'barbearia',emoji:'⚡',nl:'✂️ Barbearia',titulo:'Barbeiro mais rápido do mundo — termina em 4 minutos',src:'TikTok',views:'7.6M',likes:'590K',hora:'17:00',trend:true,legenda:'4 MINUTOS! Esse cara é inacreditável ⚡✂️\n\nVocê confiaria sentar nessa cadeira? Comenta! 👇',ht:'#barbeiro #rapido #viral #barbearia #corte #incrivel',url:'https://tiktok.com/search?q=barbeiro+mais+rapido+mundo'},
+  {id:34,nicho:'barbearia',emoji:'🎨',nl:'✂️ Barbearia',titulo:'Arte no cabelo — barbeiro cria obra prima incrível',src:'TikTok',views:'5.9M',likes:'460K',hora:'15:00',trend:true,legenda:'Isso não é corte de cabelo, é obra de arte 🎨✂️\n\nVocê toparia fazer isso? Comenta! 👇',ht:'#arte #cabelo #barbeiro #criativo #viral #barbearia',url:'https://tiktok.com/search?q=arte+cabelo+barbeiro+criativo'},
+  {id:35,nicho:'barbearia',emoji:'💰',nl:'✂️ Barbearia',titulo:'Quanto ganha um barbeiro de sucesso — a verdade',src:'YouTube',views:'1.8M',likes:'140K',hora:'13:00',trend:false,legenda:'Esse vídeo abre os olhos de muita gente 💰✂️\n\nVocê sabia que barbeiro pode ganhar isso? Comenta! 👇',ht:'#barbeiro #salario #profissao #barbearia #carreira #dinheiro',url:'https://youtube.com/results?search_query=quanto+ganha+barbeiro+sucesso'},
+  {id:36,nicho:'barbearia',emoji:'🏆',nl:'✂️ Barbearia',titulo:'Campeonato de barbeiro — cortes mais impressionantes',src:'YouTube',views:'2.4M',likes:'185K',hora:'16:00',trend:true,legenda:'Esses barbeiros são outra categoria 🏆✂️\n\nQual foi o corte mais impressionante? Comenta! 👇',ht:'#campeonato #barbeiro #barbearia #corte #competicao #viral',url:'https://youtube.com/results?search_query=campeonato+barbeiro+cortes+impressionantes'},
+  // LIFESTYLE (8)
+  {id:37,nicho:'lifestyle',emoji:'💎',nl:'💎 Lifestyle',titulo:'Rotina matinal de homens bem-sucedidos pra copiar',src:'YouTube',views:'6.3M',likes:'430K',hora:'06:00',trend:true,legenda:'Copiei essa rotina por 2 semanas e mudou tudo 💎\n\nTenta e me conta o resultado 👇',ht:'#lifestyle #rotina #manha #sucesso #habitos #homens',url:'https://youtube.com/results?search_query=rotina+matinal+homens+bem+sucedidos'},
+  {id:38,nicho:'lifestyle',emoji:'🏋️',nl:'💎 Lifestyle',titulo:'Treino em casa de 20 minutos que destrói a academia',src:'YouTube',views:'9.1M',likes:'710K',hora:'07:00',trend:true,legenda:'20 minutos e você vai sentir que treinou 2 horas 🏋️🔥\n\nSalva e tenta amanhã! 👇',ht:'#treino #casa #fitness #saude #exercicio #viral',url:'https://youtube.com/results?search_query=treino+em+casa+20+minutos'},
+  {id:39,nicho:'lifestyle',emoji:'🍕',nl:'💎 Lifestyle',titulo:'Receita viral que todo homem precisa aprender',src:'TikTok',views:'13M',likes:'1.1M',hora:'12:00',trend:true,legenda:'Fiz essa receita e fiquei impressionado como ficou fácil 🍕\n\nVocê já fez? Comenta! 👇',ht:'#receita #cozinha #viral #comida #tiktok #facil',url:'https://tiktok.com/search?q=receita+viral+masculina+facil'},
+  {id:40,nicho:'lifestyle',emoji:'🚗',nl:'💎 Lifestyle',titulo:'Carros mais desejados do Brasil em 2025',src:'YouTube',views:'4.7M',likes:'350K',hora:'14:00',trend:false,legenda:'O carro do #1 eu queria muito 🚗🔥\n\nQual é o seu favorito da lista? Comenta! 👇',ht:'#carro #automovel #ranking #brasil #2025 #lifestyle',url:'https://youtube.com/results?search_query=carros+mais+desejados+brasil+2025'},
+  {id:41,nicho:'lifestyle',emoji:'✈️',nl:'💎 Lifestyle',titulo:'Destinos brasileiros incríveis que poucos conhecem',src:'YouTube',views:'5.5M',likes:'400K',hora:'16:00',trend:false,legenda:'O Brasil tem lugares incríveis que poucos conhecem ✈️🌿\n\nQual você já visitou? Comenta! 👇',ht:'#brasil #viagem #destinos #turismo #lifestyle #viajar',url:'https://youtube.com/results?search_query=destinos+brasileiros+incriveis'},
+  {id:42,nicho:'lifestyle',emoji:'💻',nl:'💎 Lifestyle',titulo:'Como ganhar dinheiro extra pelo celular em 2025',src:'YouTube',views:'11M',likes:'860K',hora:'10:00',trend:true,legenda:'Não precisei sair de casa pra isso funcionar 💻💰\n\nQual você já testou? Comenta! 👇',ht:'#dinheiro #celular #renda+extra #2025 #ganhar+dinheiro #online',url:'https://youtube.com/results?search_query=como+ganhar+dinheiro+celular+2025'},
+  {id:43,nicho:'lifestyle',emoji:'🧴',nl:'💎 Lifestyle',titulo:'Skincare masculina — os 3 produtos que todo homem precisa',src:'TikTok',views:'7.8M',likes:'620K',hora:'09:00',trend:true,legenda:'Comecei a usar isso e todo mundo perguntou o que fiz diferente 🧴✨\n\nVocê já usa skincare? Comenta! 👇',ht:'#skincare #masculino #cuidados #pele #grooming #lifestyle',url:'https://tiktok.com/search?q=skincare+masculina+produtos+essenciais'},
+  {id:44,nicho:'lifestyle',emoji:'🎮',nl:'💎 Lifestyle',titulo:'Setup perfeito pra trabalhar e jogar em casa',src:'YouTube',views:'8.4M',likes:'670K',hora:'15:00',trend:true,legenda:'Esse setup me deixou com inveja 🎮💻\n\nQual peça você compraria primeiro? Comenta! 👇',ht:'#setup #gamer #trabalho #casa #lifestyle #tecnologia',url:'https://youtube.com/results?search_query=setup+perfeito+home+office+gamer'},
+  // NEGÓCIOS (6)
+  {id:45,nicho:'negocios',emoji:'💼',nl:'💼 Negócios',titulo:'Como abrir seu negócio com menos de R$1.000',src:'YouTube',views:'8.2M',likes:'640K',hora:'09:00',trend:true,legenda:'Não tem desculpa mais pra não começar 💼🚀\n\nSalva e começa hoje! Comenta se já tem negócio 👇',ht:'#negocios #empreendedorismo #dinheiro #negocio #brasil',url:'https://youtube.com/results?search_query=abrir+negocio+com+pouco+dinheiro'},
+  {id:46,nicho:'negocios',emoji:'📱',nl:'💼 Negócios',titulo:'Como usar o Instagram para vender mais todos os dias',src:'YouTube',views:'5.6M',likes:'420K',hora:'10:00',trend:true,legenda:'Essa estratégia triplicou as minhas vendas 📱💰\n\nSalva e aplica no seu negócio! Comenta o resultado 👇',ht:'#instagram #vendas #marketing #negocios #estrategia #dinheiro',url:'https://youtube.com/results?search_query=como+usar+instagram+para+vender+mais'},
+  {id:47,nicho:'negocios',emoji:'🤝',nl:'💼 Negócios',titulo:'Como fidelizar clientes e fazer eles voltarem sempre',src:'YouTube',views:'3.4M',likes:'265K',hora:'11:00',trend:false,legenda:'Esse é o segredo de todo negócio de sucesso 🤝\n\nAplica no seu negócio! Comenta o que já faz 👇',ht:'#clientes #fidelizacao #negocios #atendimento #sucesso',url:'https://youtube.com/results?search_query=como+fidelizar+clientes+negocio'},
+  {id:48,nicho:'negocios',emoji:'💡',nl:'💼 Negócios',titulo:'5 ideias de negócios que estão bombando no Brasil agora',src:'YouTube',views:'12M',likes:'920K',hora:'09:30',trend:true,legenda:'O #3 da lista eu nunca teria pensado 💡💰\n\nQual você toparia abrir? Comenta! 👇',ht:'#ideias #negocios #empreendedorismo #brasil #dinheiro #2025',url:'https://youtube.com/results?search_query=ideias+negocios+bombando+brasil+2025'},
+  {id:49,nicho:'negocios',emoji:'🔥',nl:'💼 Negócios',titulo:'Marketing digital gratuito — estratégias que funcionam',src:'YouTube',views:'7.3M',likes:'570K',hora:'10:30',trend:true,legenda:'Fiz tudo isso de graça e cresci 500% nas redes 🔥\n\nSalva esse vídeo! É ouro puro 👆',ht:'#marketing #digital #gratuito #estrategia #redes+sociais #viral',url:'https://youtube.com/results?search_query=marketing+digital+gratuito+estrategia'},
+  {id:50,nicho:'negocios',emoji:'🏆',nl:'💼 Negócios',titulo:'O que os maiores empresários brasileiros têm em comum',src:'YouTube',views:'4.1M',likes:'315K',hora:'07:30',trend:false,legenda:'Estudei os maiores empresários do Brasil e encontrei isso 🏆\n\nQual ponto mais te surpreendeu? Comenta! 👇',ht:'#empresarios #brasil #sucesso #negocios #empreendedorismo',url:'https://youtube.com/results?search_query=maiores+empresarios+brasileiros+segredos'},
+];
+
+let favoritos = JSON.parse(localStorage.getItem('jp_favs')||'[]');
+let historico  = JSON.parse(localStorage.getItem('jp_hist')||'[]');
+let postsHoje  = parseInt(localStorage.getItem('jp_posts')||'0');
+let meta       = parseInt(localStorage.getItem('jp_meta')||'4');
+let videoAtual = null;
+
+window.addEventListener('load',()=>{
+  setTimeout(()=>{ document.getElementById('splash').style.opacity='0'; setTimeout(()=>document.getElementById('splash').style.display='none',500); },2200);
+  const now=new Date();
+  document.getElementById('headerDate').textContent=now.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short'}).toUpperCase();
+  document.getElementById('totalBadge').textContent=VIDEOS.length;
+  document.getElementById('metaNum').textContent=meta;
+  atualizarProgress();
+  renderCountBar();
+  gerarPlano();
+  renderVideos('todos');
+  renderFavoritos();
+  renderHistorico();
+});
+
+function switchTab(tab,el){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('screen-'+tab).classList.add('active');
+  if(el) el.classList.add('active');
+}
+function setNav(el){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function renderCountBar(){
+  const nichos=[{k:'motivacao',l:'🔥 Motivação'},{k:'humor',l:'😂 Humor'},{k:'futebol',l:'⚽ Futebol'},{k:'barbearia',l:'✂️ Barbearia'},{k:'lifestyle',l:'💎 Lifestyle'},{k:'negocios',l:'💼 Negócios'}];
+  const bar=document.getElementById('countBar'); bar.innerHTML='';
+  nichos.forEach(n=>{
+    const count=VIDEOS.filter(v=>v.nicho===n.k).length;
+    const div=document.createElement('div'); div.className='count-item';
+    div.innerHTML=`<div class="count-num">${count}</div><div class="count-label">${n.l}</div>`;
+    bar.appendChild(div);
+  });
+}
+
+function gerarPlano(){
+  const nichos=['motivacao','humor','futebol','barbearia','lifestyle','negocios'];
+  let sel=[];
+  nichos.forEach(n=>{
+    const lista=VIDEOS.filter(v=>v.nicho===n);
+    if(lista.length) sel.push(lista[Math.floor(Math.random()*lista.length)]);
+  });
+  const extras=VIDEOS.filter(v=>v.trend&&!sel.find(s=>s.id===v.id)).sort(()=>Math.random()-0.5).slice(0,2);
+  sel=[...sel,...extras];
+  const c=document.getElementById('planoCards'); c.innerHTML='';
+  sel.forEach(v=>c.appendChild(criarCard(v)));
+}
+
+function filtrarNicho(nicho,el){
+  document.querySelectorAll('.nf-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  renderVideos(nicho);
+}
+function renderVideos(nicho){
+  const lista=nicho==='todos'?VIDEOS:VIDEOS.filter(v=>v.nicho===nicho);
+  const c=document.getElementById('videosCards'); c.innerHTML='';
+  lista.forEach(v=>c.appendChild(criarCard(v)));
+}
+
+function criarCard(v){
+  const isFav=favoritos.some(f=>f.id===v.id);
+  const div=document.createElement('div'); div.className='video-card';
+  div.innerHTML=`
+    <div class="video-thumb">
+      <div class="video-thumb-bg" style="background:${thumbBg(v.nicho)}">${v.emoji}</div>
+      <div class="play-overlay"><div class="play-circle"></div></div>
+      <div class="nicho-tag" style="background:${nichoBg(v.nicho)};color:${nichoColor(v.nicho)}">${v.nl}</div>
+      ${v.trend?'<div class="viral-tag">🔥 VIRAL</div>':''}
+      <div class="stats-row">
+        <div class="stat-chip">👁 ${v.views}</div>
+        <div class="stat-chip">❤️ ${v.likes}</div>
+      </div>
+    </div>
+    <div class="video-body">
+      <div class="video-title">${v.titulo}</div>
+      <div class="video-meta">
+        <span class="meta-chip meta-source">📺 ${v.src}</span>
+        <span class="meta-chip meta-hora">🕐 Postar às ${v.hora}</span>
+        ${v.trend?'<span class="meta-chip meta-trend">🔥 Bombando</span>':''}
+      </div>
+      <div class="legenda-box">
+        <div class="legenda-label">📝 LEGENDA PRONTA</div>
+        ${v.legenda.replace(/\n/g,'<br>')}
+        <div class="hashtags">${v.ht}</div>
+      </div>
+      <div class="card-actions">
+        <button class="btn-link" onclick="abrirLink(${v.id})">🔗 Ver Vídeo</button>
+        <button class="btn-compartilhar" onclick="abrirModal(${v.id})">📤 Compartilhar</button>
+        <button class="btn-fav ${isFav?'favoritado':''}" id="fav-${v.id}" onclick="toggleFav(${v.id})">${isFav?'⭐':'🤍'}</button>
+      </div>
+    </div>`;
+  return div;
+}
+
+function abrirLink(id){ const v=VIDEOS.find(v=>v.id===id); if(v) window.open(v.url,'_blank'); }
+
+function thumbBg(n){ return {motivacao:'linear-gradient(135deg,#1a0800,#3d1a00)',humor:'linear-gradient(135deg,#1a1a00,#3d3a00)',futebol:'linear-gradient(135deg,#001a00,#003d00)',barbearia:'linear-gradient(135deg,#001029,#00204d)',lifestyle:'linear-gradient(135deg,#1a0029,#3d0060)',negocios:'linear-gradient(135deg,#001a1a,#003d3d)'}[n]||'var(--bg3)'; }
+function nichoBg(n){ return {motivacao:'rgba(255,107,0,0.3)',humor:'rgba(255,215,0,0.3)',futebol:'rgba(46,160,67,0.3)',barbearia:'rgba(24,119,242,0.3)',lifestyle:'rgba(160,46,160,0.3)',negocios:'rgba(0,200,200,0.3)'}[n]||'rgba(255,255,255,0.2)'; }
+function nichoColor(n){ return {motivacao:'#ff9a3c',humor:'#ffd700',futebol:'#4caf50',barbearia:'#3d9cf5',lifestyle:'#cc66ff',negocios:'#00cccc'}[n]||'white'; }
+
+function toggleFav(id){
+  const v=VIDEOS.find(v=>v.id===id);
+  const idx=favoritos.findIndex(f=>f.id===id);
+  if(idx>=0){ favoritos.splice(idx,1); showToast('Removido dos salvos'); }
+  else{ favoritos.push(v); showToast('⭐ Salvo!'); }
+  document.querySelectorAll(`[id="fav-${id}"]`).forEach(el=>{ el.textContent=favoritos.some(f=>f.id===id)?'⭐':'🤍'; el.classList.toggle('favoritado',favoritos.some(f=>f.id===id)); });
+  localStorage.setItem('jp_favs',JSON.stringify(favoritos));
+  renderFavoritos();
+}
+function renderFavoritos(){
+  const c=document.getElementById('favoritosLista');
+  if(!favoritos.length){ c.innerHTML='<div class="empty-state"><div style="font-size:48px">⭐</div><p>Nenhum salvo ainda.<br>Toque em 🤍 para salvar!</p></div>'; return; }
+  c.innerHTML=''; favoritos.forEach(v=>c.appendChild(criarCard(v)));
+}
+
+function renderHistorico(){
+  const c=document.getElementById('historicoLista');
+  if(!historico.length){ c.innerHTML='<div class="empty-state"><div style="font-size:48px">📋</div><p>Nenhum post ainda.<br>Compartilhe e aparece aqui!</p></div>'; return; }
+  c.innerHTML='';
+  historico.slice().reverse().forEach(h=>{
+    const div=document.createElement('div'); div.className='historico-item';
+    div.innerHTML=`<div style="font-size:26px">${{WhatsApp:'💬',Instagram:'📸',TikTok:'🎵'}[h.plat]||'📤'}</div><div><div class="historico-title">${h.titulo}</div><div class="historico-meta">${h.plat} · ${h.hora}</div></div>`;
+    c.appendChild(div);
+  });
+}
+
+function atualizarProgress(){
+  document.getElementById('progressFill').style.width=Math.min((postsHoje/meta)*100,100)+'%';
+  document.getElementById('progressLabel').textContent=`${postsHoje} de ${meta} postados`;
+}
+function ajustarMeta(d){ meta=Math.max(1,Math.min(10,meta+d)); document.getElementById('metaNum').textContent=meta; localStorage.setItem('jp_meta',meta); atualizarProgress(); }
+
+function abrirModal(id){
+  videoAtual=VIDEOS.find(v=>v.id===id);
+  document.getElementById('modalVideoTitle').textContent=videoAtual.titulo;
+  document.getElementById('modalLegenda').innerHTML=(videoAtual.legenda+'\n\n'+videoAtual.ht).replace(/\n/g,'<br>');
+  document.getElementById('shareModal').classList.add('open');
+}
+function fecharModal(e){ if(e.target===document.getElementById('shareModal')) fecharModalBtn(); }
+function fecharModalBtn(){ document.getElementById('shareModal').classList.remove('open'); }
+
+function compartilhar(plat){
+  if(!videoAtual) return;
+  const texto=videoAtual.legenda+'\n\n'+videoAtual.ht+'\n\n'+videoAtual.url;
+  const urls={WhatsApp:'https://wa.me/?text='+encodeURIComponent(texto),Instagram:'instagram://app',TikTok:'tiktok://'};
+  window.open(urls[plat]||'#','_blank');
+  const now=new Date();
+  historico.push({id:Date.now(),titulo:videoAtual.titulo,plat,hora:now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})});
+  localStorage.setItem('jp_hist',JSON.stringify(historico));
+  postsHoje=Math.min(postsHoje+1,meta); localStorage.setItem('jp_posts',postsHoje);
+  atualizarProgress(); renderHistorico(); fecharModalBtn();
+  showToast('✅ Abrindo '+plat+'...');
+}
+
+function copiarLegenda(){
+  if(!videoAtual) return;
+  navigator.clipboard.writeText(videoAtual.legenda+'\n\n'+videoAtual.ht).then(()=>showToast('📋 Legenda copiada!')).catch(()=>showToast('📋 Copiado!'));
+}
+
+function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
+</script>
+</body>
+</html>
