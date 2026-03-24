@@ -1,0 +1,3283 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Tô Indo - Mobilidade Urbana</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
+<style>
+  :root {
+    --verde: #00C853;
+    --verde-escuro: #00A040;
+    --preto: #0A0A0A;
+    --cinza-escuro: #1A1A1A;
+    --cinza-medio: #2A2A2A;
+    --cinza-claro: #3A3A3A;
+    --texto: #F0F0F0;
+    --texto-muted: #888;
+    --laranja: #FF6B35;
+    --azul: #2196F3;
+    --vermelho: #F44336;
+    --amarelo: #FFC107;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--preto);
+    color: var(--texto);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ===== SPLASH / LOGIN ===== */
+  #splash {
+    position: fixed; inset: 0;
+    background: var(--preto);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 9999;
+    gap: 8px;
+  }
+
+  .logo-splash {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 52px;
+    color: var(--verde);
+    letter-spacing: -2px;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  .logo-sub {
+    font-size: 13px;
+    color: var(--texto-muted);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+
+  .car-anim {
+    font-size: 48px;
+    animation: drive 2s ease-in-out infinite;
+    margin-bottom: 20px;
+  }
+
+  @keyframes drive {
+    0%, 100% { transform: translateX(-10px); }
+    50% { transform: translateX(10px); }
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+
+  /* ===== MODAL DE LOGIN ===== */
+  #loginModal {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.95);
+    display: none; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 9998;
+    padding: 20px;
+  }
+
+  .login-card {
+    background: var(--cinza-escuro);
+    border-radius: 24px;
+    padding: 32px 24px;
+    width: 100%; max-width: 380px;
+    border: 1px solid var(--cinza-claro);
+  }
+
+  .login-logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 36px;
+    color: var(--verde);
+    text-align: center;
+    margin-bottom: 4px;
+  }
+
+  .login-sub {
+    text-align: center;
+    color: var(--texto-muted);
+    font-size: 13px;
+    margin-bottom: 28px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .role-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  .role-tab {
+    padding: 10px 6px;
+    border-radius: 12px;
+    border: 2px solid var(--cinza-claro);
+    background: transparent;
+    color: var(--texto-muted);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .role-tab.active {
+    border-color: var(--verde);
+    color: var(--verde);
+    background: rgba(0,200,83,0.1);
+  }
+
+  .role-tab span { display: block; font-size: 20px; margin-bottom: 4px; }
+
+  .input-group { margin-bottom: 14px; }
+
+  .input-group label {
+    display: block;
+    font-size: 12px;
+    color: var(--texto-muted);
+    margin-bottom: 6px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .input-group input, .input-group select {
+    width: 100%;
+    background: var(--cinza-medio);
+    border: 1.5px solid var(--cinza-claro);
+    border-radius: 12px;
+    padding: 12px 14px;
+    color: var(--texto);
+    font-size: 15px;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .input-group input:focus, .input-group select:focus {
+    border-color: var(--verde);
+  }
+
+  .btn-primary {
+    width: 100%;
+    background: var(--verde);
+    color: #000;
+    border: none;
+    border-radius: 14px;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Syne', sans-serif;
+    transition: all 0.2s;
+    margin-top: 4px;
+  }
+
+  .btn-primary:active { transform: scale(0.97); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .btn-secondary {
+    width: 100%;
+    background: transparent;
+    color: var(--texto-muted);
+    border: 1.5px solid var(--cinza-claro);
+    border-radius: 14px;
+    padding: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    margin-top: 10px;
+    transition: all 0.2s;
+  }
+
+  .btn-secondary:hover { border-color: var(--verde); color: var(--verde); }
+
+  /* ===== APP PRINCIPAL ===== */
+  #app { display: none; min-height: 100vh; flex-direction: column; }
+
+  /* ===== HEADER ===== */
+  .header {
+    background: var(--cinza-escuro);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--cinza-medio);
+    position: sticky; top: 0; z-index: 100;
+  }
+
+  .header-logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 22px;
+    color: var(--verde);
+  }
+
+  .header-user {
+    display: flex; align-items: center; gap: 10px;
+  }
+
+  .user-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--verde);
+    color: #000;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 14px;
+    font-family: 'Syne', sans-serif;
+  }
+
+  .user-info { text-align: right; }
+  .user-name { font-size: 14px; font-weight: 600; line-height: 1.2; }
+  .user-role {
+    font-size: 11px; color: var(--texto-muted);
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+
+  .btn-logout {
+    background: none; border: none;
+    color: var(--texto-muted); font-size: 18px;
+    cursor: pointer; padding: 4px;
+  }
+
+  /* ===== BADGE STATUS ===== */
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .badge-verde { background: rgba(0,200,83,0.15); color: var(--verde); }
+  .badge-laranja { background: rgba(255,107,53,0.15); color: var(--laranja); }
+  .badge-azul { background: rgba(33,150,243,0.15); color: var(--azul); }
+  .badge-vermelho { background: rgba(244,67,54,0.15); color: var(--vermelho); }
+  .badge-amarelo { background: rgba(255,193,7,0.15); color: var(--amarelo); }
+
+  /* ===== PÁGINAS ===== */
+  .page { display: none; flex: 1; padding: 16px; }
+  .page.active { display: block; }
+
+  /* ===== MAPA ===== */
+  #map {
+    height: 260px;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--cinza-claro);
+    margin-bottom: 16px;
+  }
+
+  /* ===== CARDS ===== */
+  .card {
+    background: var(--cinza-escuro);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 14px;
+    border: 1px solid var(--cinza-medio);
+  }
+
+  .card-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  /* ===== FORM CORRIDA ===== */
+  .address-input {
+    width: 100%;
+    background: var(--cinza-medio);
+    border: 1.5px solid var(--cinza-claro);
+    border-radius: 12px;
+    padding: 12px 14px;
+    color: var(--texto);
+    font-size: 15px;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    transition: border-color 0.2s;
+    margin-bottom: 10px;
+  }
+  .address-input:focus { border-color: var(--verde); }
+
+  .address-row {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .address-icon {
+    width: 32px; height: 32px; flex-shrink: 0;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+
+  .icon-origem { background: rgba(0,200,83,0.2); }
+  .icon-destino { background: rgba(244,67,54,0.2); }
+
+  .address-line {
+    width: 2px; height: 16px;
+    background: var(--cinza-claro);
+    margin-left: 15px; margin-bottom: 2px; margin-top: -6px;
+  }
+
+  /* ===== PREÇO ESTIMADO ===== */
+  .price-box {
+    background: var(--cinza-medio);
+    border-radius: 12px;
+    padding: 14px;
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px;
+    border: 1px solid var(--cinza-claro);
+  }
+
+  .price-label { font-size: 12px; color: var(--texto-muted); margin-bottom: 4px; }
+  .price-value {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 28px;
+    color: var(--verde);
+  }
+  .price-detail { font-size: 11px; color: var(--texto-muted); }
+
+  /* ===== CORRIDA ATIVA ===== */
+  .corrida-ativa {
+    background: linear-gradient(135deg, rgba(0,200,83,0.15), rgba(0,160,64,0.1));
+    border: 1.5px solid var(--verde);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+
+  .corrida-status {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .motorista-info {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--cinza-medio);
+    border-radius: 12px;
+    padding: 10px 12px;
+  }
+
+  .motorista-avatar {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: var(--verde);
+    color: #000;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 16px;
+  }
+
+  .motorista-nome { font-weight: 600; font-size: 15px; }
+  .motorista-car { font-size: 12px; color: var(--texto-muted); }
+
+  /* ===== LISTA CORRIDAS ===== */
+  .corrida-item {
+    background: var(--cinza-escuro);
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 10px;
+    border: 1px solid var(--cinza-medio);
+    transition: border-color 0.2s;
+  }
+
+  .corrida-item:active { border-color: var(--verde); }
+
+  .corrida-rota {
+    display: flex; align-items: flex-start; gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .rota-icons { display: flex; flex-direction: column; align-items: center; gap: 0; padding-top: 2px; }
+  .dot-verde { width: 10px; height: 10px; border-radius: 50%; background: var(--verde); flex-shrink: 0; }
+  .dot-vermelho { width: 10px; height: 10px; border-radius: 50%; background: var(--vermelho); flex-shrink: 0; }
+  .rota-linha { width: 2px; height: 20px; background: var(--cinza-claro); margin: 2px 0; }
+
+  .rota-texto { flex: 1; }
+  .rota-origem { font-size: 14px; font-weight: 500; margin-bottom: 8px; line-height: 1.3; }
+  .rota-destino { font-size: 14px; color: var(--texto-muted); line-height: 1.3; }
+
+  .corrida-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-top: 10px;
+    border-top: 1px solid var(--cinza-medio);
+  }
+
+  .corrida-valor {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--verde);
+  }
+
+  .corrida-dist { font-size: 12px; color: var(--texto-muted); }
+
+  /* ===== BOTÕES DE AÇÃO ===== */
+  .btn-aceitar {
+    background: var(--verde);
+    color: #000;
+    border: none;
+    border-radius: 10px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Syne', sans-serif;
+    transition: all 0.2s;
+  }
+
+  .btn-recusar {
+    background: rgba(244,67,54,0.15);
+    color: var(--vermelho);
+    border: 1.5px solid var(--vermelho);
+    border-radius: 10px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Syne', sans-serif;
+    transition: all 0.2s;
+  }
+
+  .btn-concluir {
+    background: var(--azul);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Syne', sans-serif;
+  }
+
+  .btn-cancelar-corrida {
+    background: rgba(244,67,54,0.15);
+    color: var(--vermelho);
+    border: 1.5px solid var(--vermelho);
+    border-radius: 12px;
+    padding: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    width: 100%;
+    margin-top: 8px;
+  }
+
+  /* ===== TOGGLE ONLINE/OFFLINE MOTORISTA ===== */
+  .toggle-online {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--cinza-escuro);
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+    border: 1.5px solid var(--cinza-medio);
+  }
+
+  .toggle-label { font-size: 15px; font-weight: 600; }
+  .toggle-sub { font-size: 12px; color: var(--texto-muted); margin-top: 2px; }
+
+  .switch {
+    position: relative; width: 52px; height: 28px;
+  }
+
+  .switch input { opacity: 0; width: 0; height: 0; }
+
+  .slider {
+    position: absolute; inset: 0;
+    background: var(--cinza-claro);
+    border-radius: 34px;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+
+  .slider::before {
+    content: '';
+    position: absolute;
+    width: 22px; height: 22px;
+    left: 3px; bottom: 3px;
+    background: white;
+    border-radius: 50%;
+    transition: 0.3s;
+  }
+
+  input:checked + .slider { background: var(--verde); }
+  input:checked + .slider::before { transform: translateX(24px); }
+
+  /* ===== ESTATÍSTICAS ===== */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .stat-card {
+    background: var(--cinza-escuro);
+    border-radius: 14px;
+    padding: 14px;
+    border: 1px solid var(--cinza-medio);
+    text-align: center;
+  }
+
+  .stat-icon { font-size: 24px; margin-bottom: 6px; }
+
+  .stat-value {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 22px;
+    color: var(--verde);
+    line-height: 1;
+  }
+
+  .stat-label { font-size: 11px; color: var(--texto-muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* ===== ADMIN ===== */
+  .admin-tabs {
+    display: flex; gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    margin-bottom: 16px;
+    scrollbar-width: none;
+  }
+  .admin-tabs::-webkit-scrollbar { display: none; }
+
+  .admin-tab {
+    flex-shrink: 0;
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1.5px solid var(--cinza-claro);
+    background: transparent;
+    color: var(--texto-muted);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.2s;
+  }
+
+  .admin-tab.active {
+    background: var(--verde);
+    color: #000;
+    border-color: var(--verde);
+  }
+
+  .admin-content { display: none; }
+  .admin-content.active { display: block; }
+
+  /* ===== MOTORISTA CARD ADMIN ===== */
+  .motorista-card-admin {
+    background: var(--cinza-escuro);
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 10px;
+    border: 1px solid var(--cinza-medio);
+    display: flex; align-items: center; gap: 12px;
+  }
+
+  .motorista-info-admin { flex: 1; }
+  .motorista-nome-admin { font-weight: 600; font-size: 14px; }
+  .motorista-dados { font-size: 12px; color: var(--texto-muted); margin-top: 2px; }
+  .motorista-stats { font-size: 12px; color: var(--verde); margin-top: 4px; }
+
+  /* ===== BOTTOM NAV ===== */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--cinza-escuro);
+    border-top: 1px solid var(--cinza-medio);
+    display: flex;
+    padding: 8px 0 16px;
+    z-index: 100;
+  }
+
+  .nav-item {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 4px; cursor: pointer;
+    padding: 6px 0;
+    color: var(--texto-muted);
+    font-size: 10px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    transition: color 0.2s;
+    border: none; background: none;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .nav-item.active { color: var(--verde); }
+  .nav-icon { font-size: 22px; }
+
+  .main-content { padding-bottom: 80px; }
+
+  /* ===== TOAST ===== */
+  .toast {
+    position: fixed;
+    top: 70px; left: 50%; transform: translateX(-50%);
+    background: var(--cinza-medio);
+    border: 1px solid var(--cinza-claro);
+    color: var(--texto);
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.3s;
+    white-space: nowrap;
+    max-width: 90vw;
+    text-align: center;
+  }
+
+  .toast.show { opacity: 1; }
+
+  /* ===== AGUARDANDO MOTORISTA ===== */
+  .waiting-pulse {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 20px; gap: 12px;
+  }
+
+  .pulse-ring {
+    width: 70px; height: 70px;
+    border-radius: 50%;
+    background: rgba(0,200,83,0.2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px;
+    animation: pulseRing 1.5s ease-in-out infinite;
+  }
+
+  @keyframes pulseRing {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0,200,83,0.3); }
+    50% { transform: scale(1.05); box-shadow: 0 0 0 16px rgba(0,200,83,0); }
+  }
+
+  .waiting-text { font-weight: 600; font-size: 15px; text-align: center; }
+  .waiting-sub { font-size: 13px; color: var(--texto-muted); text-align: center; }
+
+  /* ===== FORM CADASTRO MOTORISTA ===== */
+  .form-section { margin-bottom: 20px; }
+  .form-section-title {
+    font-size: 12px; color: var(--texto-muted);
+    text-transform: uppercase; letter-spacing: 1px;
+    margin-bottom: 10px; font-weight: 600;
+  }
+
+  /* ===== HISTÓRICO ===== */
+  .hist-item {
+    background: var(--cinza-escuro);
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 10px;
+    border: 1px solid var(--cinza-medio);
+  }
+
+  .hist-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .hist-data { font-size: 12px; color: var(--texto-muted); }
+  .hist-valor { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px; color: var(--verde); }
+
+  /* ===== LOADING ===== */
+  .loading-dots {
+    display: flex; gap: 6px; justify-content: center; padding: 20px;
+  }
+
+  .loading-dots span {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--verde);
+    animation: bounce 1.2s infinite;
+  }
+
+  .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  .empty-state {
+    text-align: center; padding: 30px 20px;
+    color: var(--texto-muted); font-size: 14px;
+  }
+  .empty-icon { font-size: 40px; margin-bottom: 10px; }
+
+  /* ===== AVALIAÇÃO ===== */
+  .stars { display: flex; gap: 6px; justify-content: center; margin: 10px 0; }
+  .star { font-size: 28px; cursor: pointer; opacity: 0.4; transition: opacity 0.2s; }
+  .star.active { opacity: 1; }
+
+  /* ===== SCROLL ===== */
+  .scroll-area { overflow-y: auto; max-height: calc(100vh - 200px); }
+
+  .divider {
+    height: 1px; background: var(--cinza-medio);
+    margin: 14px 0;
+  }
+
+  /* ===== ALERTA NOVA CORRIDA ===== */
+  .nova-corrida-alerta {
+    position: fixed;
+    top: 70px; left: 12px; right: 12px;
+    background: linear-gradient(135deg, #00C853, #00A040);
+    border-radius: 16px;
+    padding: 16px;
+    z-index: 500;
+    display: none;
+    box-shadow: 0 8px 32px rgba(0,200,83,0.3);
+    animation: slideDown 0.3s ease;
+  }
+
+  @keyframes slideDown {
+    from { transform: translateY(-20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .alerta-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800; font-size: 18px;
+    color: #000; margin-bottom: 8px;
+  }
+
+  .alerta-rota { color: rgba(0,0,0,0.8); font-size: 13px; margin-bottom: 12px; }
+
+  .alerta-btns { display: flex; gap: 8px; }
+
+  .btn-aceitar-alerta {
+    flex: 1; background: #000; color: var(--verde);
+    border: none; border-radius: 10px; padding: 10px;
+    font-size: 14px; font-weight: 700;
+    cursor: pointer; font-family: 'Syne', sans-serif;
+  }
+
+  .btn-recusar-alerta {
+    flex: 1; background: rgba(0,0,0,0.2); color: #000;
+    border: none; border-radius: 10px; padding: 10px;
+    font-size: 14px; font-weight: 600;
+    cursor: pointer; font-family: 'Inter', sans-serif;
+  }
+
+  /* ===== MISC ===== */
+  .section-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700; font-size: 17px;
+  }
+
+  .link-btn {
+    background: none; border: none;
+    color: var(--verde); font-size: 13px;
+    font-weight: 600; cursor: pointer;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: var(--cinza-medio);
+    border-radius: 20px;
+    padding: 4px 10px;
+    font-size: 11px; color: var(--texto-muted);
+  }
+
+  .config-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--cinza-medio);
+  }
+  .config-label { font-size: 14px; font-weight: 500; }
+  .config-value { font-size: 14px; color: var(--verde); font-weight: 600; }
+
+
+
+
+
+  /* ===== AVISO CONDIÇÕES PASSAGEIRO ===== */
+  .aviso-condicoes {
+    border-radius: 12px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+    border: 1.5px solid;
+  }
+  .aviso-condicoes.show { display: flex; }
+  .aviso-condicoes-title { font-size: 13px; font-weight: 700; }
+  .aviso-condicoes-sub { font-size: 11px; opacity: 0.85; }
+  .aviso-chuva { background: rgba(33,150,243,0.1); border-color: var(--azul); color: var(--azul); }
+  .aviso-noite { background: rgba(156,39,176,0.1); border-color: #9C27B0; color: #9C27B0; }
+  .aviso-madrugada { background: rgba(63,81,181,0.1); border-color: #3F51B5; color: #3F51B5; }
+  .aviso-rural { background: rgba(255,107,53,0.1); border-color: var(--laranja); color: var(--laranja); }
+  /* ===== CONDIÇÕES DO MOTORISTA ===== */
+  .condicoes-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .condicao-btn {
+    padding: 12px 8px;
+    border-radius: 14px;
+    border: 2px solid var(--cinza-claro);
+    background: var(--cinza-escuro);
+    color: var(--texto-muted);
+    font-size: 12px; font-weight: 600;
+    cursor: pointer; text-align: center;
+    transition: all 0.2s;
+    font-family: "Inter", sans-serif;
+    position: relative;
+  }
+  .condicao-btn span { display: block; font-size: 26px; margin-bottom: 4px; }
+  .condicao-btn .taxa-badge {
+    position: absolute; top: 6px; right: 6px;
+    background: var(--cinza-medio);
+    border-radius: 20px;
+    padding: 2px 6px;
+    font-size: 10px;
+    color: var(--texto-muted);
+  }
+  .condicao-btn.ativo-chuva { border-color: var(--azul); color: var(--azul); background: rgba(33,150,243,0.1); }
+  .condicao-btn.ativo-chuva .taxa-badge { background: var(--azul); color: #fff; }
+  .condicao-btn.ativo-rural { border-color: var(--laranja); color: var(--laranja); background: rgba(255,107,53,0.1); }
+  .condicao-btn.ativo-rural .taxa-badge { background: var(--laranja); color: #fff; }
+  .condicao-btn.ativo-noite { border-color: #9C27B0; color: #9C27B0; background: rgba(156,39,176,0.1); }
+  .condicao-btn.ativo-noite .taxa-badge { background: #9C27B0; color: #fff; }
+  .condicao-btn.ativo-madrugada { border-color: #3F51B5; color: #3F51B5; background: rgba(63,81,181,0.1); }
+  .condicao-btn.ativo-madrugada .taxa-badge { background: #3F51B5; color: #fff; }
+  .condicao-btn.auto-detect { opacity: 0.7; cursor: default; }
+  .condicoes-resumo {
+    background: var(--cinza-medio);
+    border-radius: 12px;
+    padding: 10px 14px;
+    margin-bottom: 14px;
+    font-size: 13px;
+    display: none;
+  }
+  .condicoes-resumo.show { display: block; }
+  .condicoes-resumo-title { font-size: 11px; color: var(--texto-muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .condicoes-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+  .condicao-tag {
+    padding: 3px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 600;
+  }
+  /* ===== PARADAS / TIPO / CHUVA ===== */
+  .parada-item {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 8px;
+  }
+  .parada-item input {
+    flex: 1;
+    background: var(--cinza-medio);
+    border: 1.5px solid var(--cinza-claro);
+    border-radius: 12px;
+    padding: 10px 12px;
+    color: var(--texto);
+    font-size: 14px;
+    font-family: "Inter", sans-serif;
+    outline: none;
+  }
+  .parada-item input:focus { border-color: var(--azul); }
+  .btn-remover-parada {
+    background: rgba(244,67,54,0.15);
+    border: none; border-radius: 50%;
+    width: 30px; height: 30px;
+    color: var(--vermelho);
+    font-size: 16px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .btn-add-parada {
+    background: rgba(33,150,243,0.1);
+    border: 1.5px dashed var(--azul);
+    border-radius: 10px;
+    color: var(--azul);
+    font-size: 13px; font-weight: 600;
+    padding: 8px 14px;
+    cursor: pointer;
+    width: 100%;
+    font-family: "Inter", sans-serif;
+    margin-bottom: 10px;
+  }
+  .tipo-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .tipo-btn {
+    padding: 10px 8px;
+    border-radius: 12px;
+    border: 2px solid var(--cinza-claro);
+    background: transparent;
+    color: var(--texto-muted);
+    font-size: 12px; font-weight: 600;
+    cursor: pointer; text-align: center;
+    transition: all 0.2s;
+    font-family: "Inter", sans-serif;
+  }
+  .tipo-btn span { display: block; font-size: 22px; margin-bottom: 4px; }
+  .tipo-btn.ativo-cidade { border-color: var(--verde); color: var(--verde); background: rgba(0,200,83,0.1); }
+  .tipo-btn.ativo-rural { border-color: var(--laranja); color: var(--laranja); background: rgba(255,107,53,0.1); }
+  .chuva-toggle {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--cinza-medio);
+    border-radius: 12px;
+    padding: 10px 14px;
+    margin-bottom: 10px;
+    border: 1.5px solid var(--cinza-claro);
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .chuva-toggle.ativo { border-color: var(--azul); background: rgba(33,150,243,0.1); }
+  .chuva-label { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .chuva-valor { font-size: 12px; color: var(--azul); font-weight: 600; }
+  .extras-info {
+    background: var(--cinza-medio);
+    border-radius: 10px;
+    padding: 8px 12px;
+    margin-bottom: 10px;
+    font-size: 12px;
+    color: var(--texto-muted);
+    display: none;
+  }
+  .extras-info.show { display: block; }
+  /* ===== AUTOCOMPLETE ===== */
+  .autocomplete-wrap { position: relative; margin-bottom: 10px; }
+  .autocomplete-lista {
+    display: none;
+    position: absolute;
+    top: 100%; left: 0; right: 0;
+    background: var(--cinza-medio);
+    border: 1.5px solid var(--verde);
+    border-radius: 12px;
+    z-index: 999;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+  .autocomplete-item {
+    padding: 12px 14px;
+    font-size: 13px;
+    color: var(--texto);
+    cursor: pointer;
+    border-bottom: 1px solid var(--cinza-claro);
+    display: flex; align-items: center;
+    transition: background 0.15s;
+  }
+  .autocomplete-item:last-child { border-bottom: none; }
+  .autocomplete-item:active { background: var(--cinza-claro); }
+
+  /* ===== SERVIÇOS ===== */
+  .servico-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
+  .servico-btn { padding:14px 10px; border-radius:16px; border:1.5px solid var(--cinza-claro); background:var(--cinza-medio); cursor:pointer; text-align:center; transition:all .2s; }
+  .servico-btn.ativo { border-color:var(--verde); background:rgba(0,200,83,.08); box-shadow:0 0 16px rgba(0,200,83,.2); }
+  .servico-icon { font-size:28px; margin-bottom:6px; display:block; }
+  .servico-nome { font-size:12px; font-weight:700; color:var(--texto); text-transform:uppercase; letter-spacing:.5px; }
+  .servico-desc { font-size:10px; color:var(--texto-muted); margin-top:2px; }
+  /* ===== ORÇAMENTO ===== */
+  .orcamento-card { background:linear-gradient(135deg,rgba(255,107,53,.08),rgba(255,107,53,.04)); border:1.5px solid rgba(255,107,53,.3); border-radius:18px; padding:16px; margin-bottom:12px; }
+  .orcamento-titulo { font-family:'Syne',sans-serif; font-weight:800; font-size:17px; color:var(--laranja); margin-bottom:12px; }
+  .textarea-box { width:100%; background:var(--cinza-medio); border:1.5px solid var(--cinza-claro); border-radius:12px; padding:12px 14px; color:var(--texto); font-size:14px; font-family:'Inter',sans-serif; outline:none; resize:none; min-height:72px; margin-bottom:10px; }
+  .textarea-box:focus { border-color:var(--laranja); }
+  .select-box { width:100%; background:var(--cinza-medio); border:1.5px solid var(--cinza-claro); border-radius:12px; padding:12px 14px; color:var(--texto); font-size:15px; font-family:'Inter',sans-serif; outline:none; margin-bottom:12px; }
+  /* ===== AJUDANTES ===== */
+  .ajudante-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:12px; }
+  .ajudante-btn { padding:10px 6px; border-radius:12px; border:1.5px solid var(--cinza-claro); background:transparent; color:var(--texto-muted); font-size:11px; font-weight:600; cursor:pointer; text-align:center; font-family:'Inter',sans-serif; transition:all .2s; }
+  .ajudante-btn span { display:block; font-size:18px; margin-bottom:3px; }
+  .ajudante-btn.ativo { border-color:var(--verde); color:var(--verde); background:rgba(0,200,83,.08); }
+  /* ===== REGISTRAR SERVIÇO ===== */
+  .registrar-card { background:linear-gradient(135deg,rgba(0,200,83,.08),rgba(0,160,64,.04)); border:1.5px solid rgba(0,200,83,.3); border-radius:18px; padding:16px; margin-bottom:12px; }
+  /* ===== FAVORITOS ===== */
+  .fav-tag { background:var(--cinza-medio); border:1px solid var(--cinza-claro); border-radius:20px; padding:5px 12px; font-size:11px; color:var(--verde); cursor:pointer; font-family:'Inter',sans-serif; display:inline-block; margin:3px; }
+  /* ===== INSTALL BANNER ===== */
+  #installBanner { display:none; position:fixed; bottom:80px; left:12px; right:12px; background:linear-gradient(135deg,var(--verde),var(--verde-escuro)); border-radius:16px; padding:14px 16px; z-index:300; box-shadow:0 8px 24px rgba(0,200,83,.3); }
+  .install-txt { font-size:14px; font-weight:700; color:#000; margin-bottom:4px; }
+  .install-sub { font-size:12px; color:rgba(0,0,0,.7); margin-bottom:10px; }
+  .btn-instalar { background:#000; color:var(--verde); border:none; border-radius:10px; padding:9px 18px; font-size:13px; font-weight:700; cursor:pointer; font-family:'Syne',sans-serif; letter-spacing:1px; }
+  .btn-instalar-depois { background:rgba(0,0,0,.2); color:#000; border:none; border-radius:10px; padding:9px 14px; font-size:12px; cursor:pointer; margin-left:8px; }
+  /* ===== CONFIG AVANÇADO ===== */
+  .cfg-secao { font-size:10px; color:var(--texto-muted); text-transform:uppercase; letter-spacing:2px; font-weight:700; margin:16px 0 8px; padding-bottom:6px; border-bottom:1px solid var(--cinza-claro); }
+  .cfg-row { display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid rgba(255,255,255,.04); }
+  .cfg-inp { background:var(--cinza-medio); border:1.5px solid var(--cinza-claro); border-radius:10px; padding:7px 10px; color:var(--texto); font-size:14px; font-family:'Inter',sans-serif; outline:none; width:85px; text-align:right; }
+  .cfg-inp:focus { border-color:var(--verde); }
+  /* ===== FINANCEIRO ===== */
+  .fin-row { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid rgba(255,255,255,.04); }
+  .fin-row:last-child { border-bottom:none; }
+  .fin-lbl { font-size:14px; color:var(--texto-muted); }
+  .fin-val { font-family:'Syne',sans-serif; font-weight:800; font-size:18px; color:var(--verde); }
+  input[type=number] { -moz-appearance: textfield; }
+  input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; }
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="car-anim">🚗</div>
+  <div class="logo-splash">Tô Indo</div>
+  <div class="logo-sub">Mobilidade Urbana</div>
+</div>
+
+<!-- MODAL LOGIN -->
+<div id="loginModal">
+  <div class="login-card">
+    <div class="login-logo">Tô Indo 🚗</div>
+    <div class="login-sub">Mobilidade Urbana</div>
+
+    <div class="role-tabs">
+      <button class="role-tab active" onclick="selectRole('passageiro')" id="tab-passageiro">
+        <span>🧍</span>Passageiro
+      </button>
+      <button class="role-tab" onclick="selectRole('motorista')" id="tab-motorista">
+        <span>🚗</span>Motorista
+      </button>
+      <button class="role-tab" onclick="selectRole('admin')" id="tab-admin">
+        <span>⚙️</span>Admin
+      </button>
+    </div>
+
+    <div id="loginFields">
+      <div class="input-group">
+        <label>Seu nome</label>
+        <input type="text" id="loginNome" placeholder="Digite seu nome">
+      </div>
+      <div class="input-group">
+        <label>Telefone (WhatsApp)</label>
+        <input type="tel" id="loginTel" placeholder="(31) 99999-9999">
+      </div>
+    </div>
+
+    <div id="adminFields" style="display:none">
+      <div class="input-group">
+        <label>Senha Admin</label>
+        <input type="password" id="adminSenha" placeholder="Senha do administrador">
+      </div>
+    </div>
+
+    <button class="btn-primary" onclick="fazerLogin()">Entrar no app</button>
+    <button class="btn-secondary" onclick="mostrarCadastro()">Primeira vez? Cadastre-se</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- INSTALL BANNER PWA -->
+<div id="installBanner">
+  <div class="install-txt">📲 Instalar Tô Indo</div>
+  <div class="install-sub">Adicione na tela inicial — funciona como app!</div>
+  <button class="btn-instalar" onclick="instalarApp()">INSTALAR AGORA</button>
+  <button class="btn-instalar-depois" onclick="document.getElementById('installBanner').style.display='none'">Depois</button>
+</div>
+
+<!-- ALERTA NOVA CORRIDA (Motorista) -->
+<div class="nova-corrida-alerta" id="novaCorridaAlerta">
+  <div class="alerta-title">🔔 Nova Corrida!</div>
+  <div class="alerta-rota" id="alertaRota"></div>
+  <div style="display:flex;gap:16px;margin-bottom:8px">
+    <span style="font-size:13px;color:#000;font-weight:600" id="alertaValor"></span>
+    <span style="font-size:13px;color:rgba(0,0,0,0.7)" id="alertaDist"></span>
+  </div>
+  <div class="alerta-btns">
+    <button class="btn-aceitar-alerta" onclick="aceitarCorridaAlerta()">✓ Aceitar</button>
+    <button class="btn-recusar-alerta" onclick="recusarCorridaAlerta()">✕ Recusar</button>
+  </div>
+</div>
+
+<!-- APP PRINCIPAL -->
+<div id="app">
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-logo">🚗 Tô Indo</div>
+    <div class="header-user">
+      <div class="user-info">
+        <div class="user-name" id="headerNome">-</div>
+        <div class="user-role" id="headerRole">-</div>
+      </div>
+      <div class="user-avatar" id="headerAvatar">?</div>
+      <button class="btn-logout" onclick="logout()" title="Sair">⏻</button>
+    </div>
+  </div>
+
+  <div class="main-content">
+
+    <!-- ====== PÁGINA PASSAGEIRO ====== -->
+    <div class="page active" id="page-passageiro">
+      <div id="map"></div>
+
+      <!-- Estado: Solicitar corrida -->
+      <div id="estado-solicitar">
+
+        <!-- Escolha de serviço -->
+        <div class="card" id="card-servico">
+          <div class="card-title">🚀 Que serviço você precisa?</div>
+          <div class="servico-grid">
+            <div class="servico-btn ativo" id="srv-corrida" onclick="selecionarServico('corrida')">
+              <span class="servico-icon">🚗</span>
+              <div class="servico-nome">Corrida</div>
+              <div class="servico-desc">Transporte rápido</div>
+            </div>
+            <div class="servico-btn" id="srv-delivery" onclick="selecionarServico('delivery')">
+              <span class="servico-icon">🛵</span>
+              <div class="servico-nome">Delivery</div>
+              <div class="servico-desc">Entrega & motoboy</div>
+            </div>
+            <div class="servico-btn" id="srv-carreto" onclick="selecionarServico('carreto')">
+              <span class="servico-icon">📦</span>
+              <div class="servico-nome">Carreto</div>
+              <div class="servico-desc">Fretes pequenos</div>
+            </div>
+            <div class="servico-btn" id="srv-mudanca" onclick="selecionarServico('mudanca')">
+              <span class="servico-icon">🚛</span>
+              <div class="servico-nome">Mudança</div>
+              <div class="servico-desc">Com/sem ajudante</div>
+            </div>
+            <div class="servico-btn" id="srv-van" onclick="selecionarServico('van')">
+              <span class="servico-icon">🚐</span>
+              <div class="servico-nome">Van / Excursão</div>
+              <div class="servico-desc">Grupos e viagens</div>
+            </div>
+            <div class="servico-btn" id="srv-caminhonete" onclick="selecionarServico('caminhonete')">
+              <span class="servico-icon">🛻</span>
+              <div class="servico-nome">Caminhonete</div>
+              <div class="servico-desc">Cargas e viagens</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- FORM CORRIDA -->
+        <div id="form-corrida">
+        <div class="card">
+          <div class="card-title">📍 Para onde você vai?</div>
+
+          <!-- Avisos de condições ativas -->
+          <div id="aviso-chuva" class="aviso-condicoes aviso-chuva">
+            <div class="aviso-condicoes-title">🌧️ Tarifa de chuva ativa</div>
+            <div class="aviso-condicoes-sub" id="texto-aviso-chuva">Preços com +20% por conta da chuva</div>
+          </div>
+          <div id="aviso-noite" class="aviso-condicoes aviso-noite">
+            <div class="aviso-condicoes-title">🌙 Tarifa noturna ativa</div>
+            <div class="aviso-condicoes-sub" id="texto-aviso-noite">Preços com +15% — período noturno</div>
+          </div>
+          <div id="aviso-madrugada" class="aviso-condicoes aviso-madrugada">
+            <div class="aviso-condicoes-title">🌃 Tarifa madrugada ativa</div>
+            <div class="aviso-condicoes-sub" id="texto-aviso-madrugada">Preços com +30% — período de madrugada</div>
+          </div>
+
+
+          <div class="autocomplete-wrap">
+            <div class="address-row">
+              <div class="address-icon icon-origem">🟢</div>
+              <input type="text" class="address-input" id="origem" placeholder="Detectando sua localização..." autocomplete="off">
+            </div>
+            <div class="autocomplete-lista" id="lista-origem"></div>
+          </div>
+          <div class="address-line"></div>
+          <!-- PARADAS -->
+          <div id="area-paradas"></div>
+          <button class="btn-add-parada" onclick="adicionarParada()">+ Adicionar parada</button>
+
+          <div class="autocomplete-wrap">
+            <div class="address-row">
+              <div class="address-icon icon-destino">🔴</div>
+              <input type="text" class="address-input" id="destino" placeholder="Para onde vai? Ex: Av. Getúlio Vargas" autocomplete="off">
+            </div>
+            <div class="autocomplete-lista" id="lista-destino"></div>
+          </div>
+
+          <!-- TIPO DE CORRIDA: passageiro escolhe cidade ou rural -->
+          <div style="font-size:12px;color:var(--texto-muted);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:1px">Tipo de corrida</div>
+          <div class="tipo-grid">
+            <button class="tipo-btn ativo-cidade" id="btn-cidade" onclick="selecionarTipo('cidade')">
+              <span>🏙️</span>Cidade
+            </button>
+            <button class="tipo-btn" id="btn-rural" onclick="selecionarTipo('rural')">
+              <span>🌾</span>Zona Rural<br><small style="font-size:10px;opacity:0.7" id="label-taxa-rural">(+30% no valor)</small>
+            </button>
+          </div>
+
+          <!-- AVISO: condições ativas pelo motorista aparecem aqui -->
+          <div class="extras-info" id="extrasInfo"></div>
+
+          <button class="btn-primary" onclick="calcularCorrida()" style="margin-top:4px">
+            Calcular corrida →
+          </button>
+        </div>
+
+        <div id="boxPreco" style="display:none">
+          <div class="price-box">
+            <div>
+              <div class="price-label">Valor estimado</div>
+              <div class="price-value" id="valorEstimado">R$ 0,00</div>
+              <div class="price-detail" id="detalheDistancia">0 km</div>
+            </div>
+            <div style="text-align:right">
+              <div class="price-label">Tempo estimado</div>
+              <div style="font-size:20px;font-weight:700" id="tempoEstimado">~0 min</div>
+              <div class="price-detail">aproximado</div>
+            </div>
+          </div>
+
+          <button class="btn-primary" onclick="solicitarCorrida()">
+            🚗 Solicitar corrida
+          </button>
+          <button onclick="salvarFavorito()" style="width:100%;background:transparent;border:none;color:var(--texto-muted);padding:8px;font-size:13px;cursor:pointer;margin-top:4px">⭐ Salvar destino como favorito</button>
+        </div>
+      </div>
+
+        </div><!-- /card corrida -->
+
+        <!-- FAVORITOS -->
+        <div id="favs-box" style="display:none;margin-bottom:10px">
+          <div style="font-size:10px;color:var(--texto-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">⭐ Endereços favoritos</div>
+          <div id="favs-lista"></div>
+        </div>
+
+        </div><!-- /form-corrida -->
+
+        <!-- FORM DELIVERY -->
+        <div id="form-delivery" style="display:none">
+          <div class="orcamento-card">
+            <div class="orcamento-titulo">🛵 PEDIR DELIVERY</div>
+            <div class="input-group"><label>Estabelecimento</label><input type="text" class="address-input" id="deliveryEstab" placeholder="Ex: Farmácia Central, Mercadão..."></div>
+            <div class="input-group"><label>O que precisa?</label><textarea class="textarea-box" id="deliveryPedido" placeholder="Ex: 1 caixa de Dipirona 500mg, 2 litros de Coca-Cola..."></textarea></div>
+            <div class="autocomplete-wrap">
+              <input type="text" class="address-input" id="deliveryOrigem" placeholder="📍 Endereço do estabelecimento" autocomplete="off">
+              <div class="autocomplete-lista" id="ac-delivery-origem"></div>
+            </div>
+            <div class="autocomplete-wrap" style="margin-top:8px">
+              <input type="text" class="address-input" id="deliveryDestino" placeholder="🏁 Seu endereço de entrega" autocomplete="off">
+              <div class="autocomplete-lista" id="ac-delivery-destino"></div>
+            </div>
+            <div style="background:rgba(0,200,83,.05);border:1px solid rgba(0,200,83,.2);border-radius:10px;padding:10px 12px;margin:10px 0;font-size:12px;color:var(--verde)">
+              💡 <b>Como funciona:</b> Faça o PIX pro estabelecimento antes. O motoboy busca e entrega. Você paga só a taxa de entrega na chegada.
+            </div>
+            <button class="btn-primary" onclick="solicitarDelivery()">🛵 SOLICITAR MOTOBOY</button>
+          </div>
+        </div>
+
+        <!-- FORM ORÇAMENTO (carreto, mudança, van, caminhonete) -->
+        <div id="form-orcamento" style="display:none">
+          <div class="orcamento-card">
+            <div class="orcamento-titulo" id="orc-titulo">📦 SOLICITAR ORÇAMENTO</div>
+
+            <!-- Ajudantes (só mudança) -->
+            <div id="orc-ajudantes" style="display:none">
+              <div style="font-size:12px;color:var(--texto-muted);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:1px">Vai precisar de ajudante?</div>
+              <div class="ajudante-grid">
+                <button class="ajudante-btn ativo" id="aj-btn-0" onclick="selAjudante(0)"><span>👤</span>Sem ajudante</button>
+                <button class="ajudante-btn" id="aj-btn-1" onclick="selAjudante(1)"><span>👥</span>1 ajudante<br><small id="aj1-label" style="font-size:10px;opacity:.6">+R$50</small></button>
+                <button class="ajudante-btn" id="aj-btn-2" onclick="selAjudante(2)"><span>👥👥</span>2 ajudantes<br><small id="aj2-label" style="font-size:10px;opacity:.6">+R$90</small></button>
+              </div>
+              <div class="divider"></div>
+            </div>
+
+            <div class="input-group"><label>De onde?</label>
+              <div class="autocomplete-wrap">
+                <input type="text" class="address-input" id="orcOrigem" placeholder="Endereço de origem" autocomplete="off">
+                <div class="autocomplete-lista" id="ac-orc-origem"></div>
+              </div>
+            </div>
+            <div class="input-group"><label>Para onde?</label>
+              <div class="autocomplete-wrap">
+                <input type="text" class="address-input" id="orcDestino" placeholder="Endereço de destino" autocomplete="off">
+                <div class="autocomplete-lista" id="ac-orc-destino"></div>
+              </div>
+            </div>
+            <div class="input-group"><label>Descreva o serviço</label>
+              <textarea class="textarea-box" id="orcDescricao" placeholder="Ex: Mudança de apartamento 2 quartos, móveis desmontados..."></textarea>
+            </div>
+            <div class="input-group"><label>Data e horário desejado</label>
+              <input type="text" class="address-input" id="orcData" placeholder="Ex: Amanhã às 8h, Sábado à tarde...">
+            </div>
+
+            <div id="motoristas-orc-lista" style="display:none">
+              <div style="font-size:11px;color:var(--texto-muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:1px">Motoristas disponíveis — toque para contatar:</div>
+              <div id="lista-motoristas-orc"></div>
+            </div>
+
+            <button class="btn-primary" onclick="buscarMotoristasOrc()">🔍 VER MOTORISTAS DISPONÍVEIS</button>
+          </div>
+        </div>
+
+      <!-- Estado: Aguardando motorista -->
+      <div id="estado-aguardando" style="display:none">
+        <div class="card">
+          <div class="waiting-pulse">
+            <div class="pulse-ring">🚗</div>
+            <div class="waiting-text">Procurando motorista...</div>
+            <div class="waiting-sub">Aguarde, estamos conectando você com o motorista mais próximo</div>
+          </div>
+          <div class="price-box" style="margin-bottom:0">
+            <div>
+              <div class="price-label">Valor da corrida</div>
+              <div class="price-value" id="valorAguardando">R$ 0,00</div>
+            </div>
+            <div style="text-align:right">
+              <div class="price-label">Rota</div>
+              <div style="font-size:11px;color:var(--texto-muted);max-width:140px;text-align:right" id="rotaAguardando">-</div>
+            </div>
+          </div>
+          <button class="btn-cancelar-corrida" onclick="cancelarCorrida()">Cancelar corrida</button>
+        </div>
+      </div>
+
+      <!-- Estado: Motorista a caminho -->
+      <div id="estado-aceita" style="display:none">
+        <div class="corrida-ativa">
+          <div class="corrida-status">
+            <span class="badge badge-amarelo">🔄 A caminho</span>
+            <span id="etaMotorista" style="font-size:13px;color:var(--texto-muted)"></span>
+          </div>
+          <div class="motorista-info">
+            <div class="motorista-avatar" id="avatarMotoristaPassageiro">M</div>
+            <div>
+              <div class="motorista-nome" id="nomeMotoristaPassageiro">-</div>
+              <div class="motorista-car" id="carroMotoristaPassageiro">-</div>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:0">
+          <div class="price-box" style="margin-bottom:0">
+            <div>
+              <div class="price-label">Valor</div>
+              <div class="price-value" id="valorAceita">-</div>
+            </div>
+            <div>
+              <div class="price-label">Destino</div>
+              <div style="font-size:12px;color:var(--texto-muted)" id="destinoAceita">-</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Estado: Em viagem -->
+      <div id="estado-viagem" style="display:none">
+        <div class="corrida-ativa" style="background:linear-gradient(135deg,rgba(33,150,243,0.15),rgba(33,150,243,0.05));border-color:var(--azul)">
+          <div class="corrida-status">
+            <span class="badge badge-azul">🚗 Em viagem</span>
+          </div>
+          <div class="motorista-info">
+            <div class="motorista-avatar" id="avatarMotoristaViagem" style="background:var(--azul)">M</div>
+            <div>
+              <div class="motorista-nome" id="nomeMotoristaViagem">-</div>
+              <div class="motorista-car">Em direção ao destino</div>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:0">
+          <div style="text-align:center;padding:8px 0">
+            <div style="font-size:13px;color:var(--texto-muted);margin-bottom:4px">Destino</div>
+            <div style="font-weight:600;font-size:15px" id="destinoViagem">-</div>
+            <div style="font-size:22px;font-weight:800;color:var(--verde);margin-top:8px;font-family:'Syne',sans-serif" id="valorViagem">-</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Estado: Avaliação -->
+      <div id="estado-avaliar" style="display:none">
+        <div class="card">
+          <div class="card-title">⭐ Avalie sua corrida</div>
+          <div style="text-align:center;padding:10px 0">
+            <div style="font-size:40px;margin-bottom:8px">🏁</div>
+            <div style="font-weight:600;margin-bottom:4px">Corrida concluída!</div>
+            <div style="font-size:13px;color:var(--texto-muted);margin-bottom:16px" id="resumoAvaliar">-</div>
+            <div class="stars" id="starsAvaliar">
+              <span class="star" onclick="avaliar(1)">⭐</span>
+              <span class="star" onclick="avaliar(2)">⭐</span>
+              <span class="star" onclick="avaliar(3)">⭐</span>
+              <span class="star" onclick="avaliar(4)">⭐</span>
+              <span class="star" onclick="avaliar(5)">⭐</span>
+            </div>
+          </div>
+          <button class="btn-primary" onclick="confirmarAvaliacao()">Confirmar avaliação</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== PÁGINA MOTORISTA ====== -->
+    <div class="page" id="page-motorista">
+
+      <!-- Toggle online -->
+      <div class="toggle-online">
+        <div>
+          <div class="toggle-label" id="statusOnlineTexto">Você está offline</div>
+          <div class="toggle-sub">Ative para receber corridas</div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="toggleOnline" onchange="alterarOnline()">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <!-- Condições ativas -->
+      <div class="card" id="card-condicoes">
+        <div class="card-title">⚡ Condições de corrida</div>
+        <div style="font-size:12px;color:var(--texto-muted);margin-bottom:10px">Ative as condições antes de aceitar corridas. O valor é ajustado automaticamente.</div>
+        <div class="condicoes-grid">
+          <button class="condicao-btn" id="btn-cond-chuva" onclick="toggleCondicaoMotorista('chuva')">
+            <div class="taxa-badge" id="badge-chuva">+0%</div>
+            <span>🌧️</span>Chuva
+          </button>
+          <button class="condicao-btn" id="btn-cond-rural" onclick="toggleCondicaoMotorista('rural')">
+            <div class="taxa-badge" id="badge-rural">+0%</div>
+            <span>🌾</span>Zona Rural
+          </button>
+          <button class="condicao-btn" id="btn-cond-noite" onclick="toggleCondicaoMotorista('noite')">
+            <div class="taxa-badge" id="badge-noite">+0%</div>
+            <span>🌙</span>Noite
+          </button>
+          <button class="condicao-btn" id="btn-cond-madrugada" onclick="toggleCondicaoMotorista('madrugada')">
+            <div class="taxa-badge" id="badge-madrugada">+0%</div>
+            <span>🌃</span>Madrugada
+          </button>
+        </div>
+        <div class="condicoes-resumo" id="condicoes-resumo">
+          <div class="condicoes-resumo-title">Taxas ativas agora</div>
+          <div class="condicoes-tags" id="condicoes-tags"></div>
+        </div>
+      </div>
+
+      <!-- Stats do dia -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">🏁</div>
+          <div class="stat-value" id="corridasDia">0</div>
+          <div class="stat-label">Corridas hoje</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">💰</div>
+          <div class="stat-value" id="ganhosDia">R$0</div>
+          <div class="stat-label">Ganhos hoje</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">⭐</div>
+          <div class="stat-value" id="avaliacaoMedia">5.0</div>
+          <div class="stat-label">Avaliação</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🛣️</div>
+          <div class="stat-value" id="kmDia">0</div>
+          <div class="stat-label">Km rodados</div>
+        </div>
+      </div>
+
+      <!-- Corrida ativa do motorista -->
+      <div id="motorista-corrida-ativa" style="display:none">
+        <div class="section-header">
+          <div class="section-title">Corrida atual</div>
+        </div>
+        <div class="corrida-ativa">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <span class="badge badge-azul" id="statusCorridaMotorista">🔄 A caminho</span>
+            <span class="corrida-valor" id="valorCorridaMotorista">-</span>
+          </div>
+          <div class="corrida-rota">
+            <div class="rota-icons">
+              <div class="dot-verde"></div>
+              <div class="rota-linha"></div>
+              <div class="dot-vermelho"></div>
+            </div>
+            <div class="rota-texto">
+              <div class="rota-origem" id="origemCorridaMotorista">-</div>
+              <div class="rota-destino" id="destinoCorridaMotorista">-</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <div style="flex:1;background:var(--cinza-medio);border-radius:10px;padding:8px;text-align:center">
+              <div style="font-size:11px;color:var(--texto-muted)">Passageiro</div>
+              <div style="font-size:13px;font-weight:600" id="passageiroNomeMotorista">-</div>
+            </div>
+            <div style="flex:1;background:var(--cinza-medio);border-radius:10px;padding:8px;text-align:center">
+              <div style="font-size:11px;color:var(--texto-muted)">Comissão (15%)</div>
+              <div style="font-size:13px;font-weight:600;color:var(--laranja)" id="comissaoMotorista">-</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button class="btn-aceitar" style="flex:1" id="btnIniciarViagem" onclick="iniciarViagem()">▶ Iniciar viagem</button>
+            <button class="btn-concluir" style="flex:1" id="btnConcluir" onclick="concluirCorrida()" style="display:none">✓ Concluir</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sem corrida ativa -->
+      <div id="motorista-sem-corrida">
+        <div class="card">
+          <div class="empty-state">
+            <div class="empty-icon">🛣️</div>
+            <div style="font-weight:600;margin-bottom:4px">Aguardando corridas</div>
+            <div>Fique online para começar a receber</div>
+          </div>
+        </div>
+      </div>
+      <!-- Registrar serviço fechado -->
+      <div class="registrar-card">
+        <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:17px;color:var(--verde);margin-bottom:12px">💼 REGISTRAR SERVIÇO FECHADO</div>
+        <div style="font-size:12px;color:var(--texto-muted);margin-bottom:12px">Use para carreto, mudança, van — após combinar o preço com o cliente.</div>
+        <div class="input-group">
+          <label>Tipo de serviço</label>
+          <select class="select-box" id="reg-tipo">
+            <option value="carreto">📦 Carreto</option>
+            <option value="mudanca">🚛 Mudança</option>
+            <option value="van">🚐 Van / Excursão</option>
+            <option value="caminhonete">🛻 Caminhonete</option>
+          </select>
+        </div>
+        <div class="input-group"><label>Nome do cliente</label><input type="text" class="address-input" id="reg-cliente" placeholder="Nome do cliente"></div>
+        <div class="input-group"><label>Valor combinado (R$)</label><input type="number" class="address-input" id="reg-valor" placeholder="0,00"></div>
+        <div class="input-group"><label>Descrição</label><textarea class="textarea-box" id="reg-descricao" placeholder="De onde até onde, o que foi feito..." style="min-height:60px"></textarea></div>
+        <button class="btn-primary" onclick="registrarServico()" style="background:linear-gradient(135deg,var(--verde),var(--verde-escuro))">REGISTRAR SERVIÇO</button>
+      </div>
+
+    </div>
+
+    <!-- ====== PÁGINA HISTÓRICO ====== -->
+    <div class="page" id="page-historico">
+      <div class="section-header">
+        <div class="section-title">Histórico</div>
+        <div id="totalHistorico" class="chip">Total: R$ 0,00</div>
+      </div>
+      <div id="listaHistorico">
+        <div class="empty-state">
+          <div class="empty-icon">📋</div>
+          <div>Nenhuma corrida ainda</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== PÁGINA ADMIN ====== -->
+    <div class="page" id="page-admin">
+
+      <!-- Stats gerais -->
+      <div class="stats-grid" style="grid-template-columns:1fr 1fr 1fr">
+        <div class="stat-card">
+          <div class="stat-icon">🏁</div>
+          <div class="stat-value" id="totalCorridas">0</div>
+          <div class="stat-label">Total corridas</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">💰</div>
+          <div class="stat-value" id="faturamento" style="font-size:16px">R$0</div>
+          <div class="stat-label">Faturamento</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🚗</div>
+          <div class="stat-value" id="totalMotoristas">0</div>
+          <div class="stat-label">Motoristas</div>
+        </div>
+      </div>
+
+      <div class="admin-tabs">
+        <button class="admin-tab active" onclick="adminTab('corridas')">Corridas</button>
+        <button class="admin-tab" onclick="adminTab('motoristas')">Motoristas</button>
+        <button class="admin-tab" onclick="adminTab('cadastrar')">+ Cadastrar</button>
+        <button class="admin-tab" onclick="adminTab('financeiro')">Financeiro</button>
+        <button class="admin-tab" onclick="adminTab('config')">Config</button>
+      </div>
+
+      <!-- Admin: Corridas -->
+      <div class="admin-content active" id="admin-corridas">
+        <div id="listaCorridasAdmin">
+          <div class="loading-dots"><span></span><span></span><span></span></div>
+        </div>
+      </div>
+
+      <!-- Admin: Motoristas -->
+      <div class="admin-content" id="admin-motoristas">
+        <div id="listaMotoristaAdmin">
+          <div class="loading-dots"><span></span><span></span><span></span></div>
+        </div>
+      </div>
+
+      <!-- Admin: Cadastrar motorista -->
+      <div class="admin-content" id="admin-cadastrar">
+        <div class="card">
+          <div class="card-title">🚗 Cadastrar novo motorista</div>
+
+          <div class="form-section">
+            <div class="form-section-title">Dados pessoais</div>
+            <div class="input-group">
+              <label>Nome completo</label>
+              <input type="text" id="cadNome" placeholder="Nome do motorista">
+            </div>
+            <div class="input-group">
+              <label>Telefone/WhatsApp</label>
+              <input type="tel" id="cadTel" placeholder="(31) 99999-9999">
+            </div>
+            <div class="input-group">
+              <label>CPF</label>
+              <input type="text" id="cadCpf" placeholder="000.000.000-00">
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="form-section-title">Veículo</div>
+            <div class="input-group">
+              <label>Tipo de veículo</label>
+              <select class="select-box" id="cadTipoVeiculo">
+                <option value="carro">🚗 Carro</option>
+                <option value="moto">🛵 Moto / Motoboy</option>
+                <option value="van">🚐 Van</option>
+                <option value="caminhonete">🛻 Caminhonete</option>
+                <option value="caminhao">🚛 Caminhão</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <label>Modelo</label>
+              <input type="text" id="cadCarro" placeholder="Ex: Celta 2015, Gol 2018, HR 2020">
+            </div>
+            <div class="input-group">
+              <label>Placa</label>
+              <input type="text" id="cadPlaca" placeholder="ABC-1234">
+            </div>
+            <div class="input-group">
+              <label>Cor</label>
+              <input type="text" id="cadCor" placeholder="Ex: Prata, Branco, Preto">
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="form-section-title">Serviços que realiza</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+              <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="cad-faz-corrida" checked> 🚗 Corrida</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="cad-faz-delivery"> 🛵 Delivery</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="cad-faz-carreto"> 📦 Carreto</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="cad-faz-mudanca"> 🚛 Mudança</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="cad-faz-van"> 🚐 Van/Excursão</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="cad-tem-ajudante"> 👥 Tem ajudante</label>
+            </div>
+          </div>
+
+          <button class="btn-primary" onclick="cadastrarMotorista()">
+            ✓ Cadastrar motorista
+          </button>
+        </div>
+      </div>
+
+      <!-- Admin: Configurações -->
+      <div class="admin-content" id="admin-config">
+        <div class="card">
+          <div class="card-title">⚙️ Configurações</div>
+
+          <div class="cfg-secao">💰 Preço por km (R$/km)</div>
+          <div class="cfg-row"><span>🚗 Carro</span><input class="cfg-inp" id="cfg-km-carro" type="number" step=".10" value="2.00"></div>
+          <div class="cfg-row"><span>🛵 Moto</span><input class="cfg-inp" id="cfg-km-moto" type="number" step=".10" value="1.50"></div>
+          <div class="cfg-row"><span>🚐 Van</span><input class="cfg-inp" id="cfg-km-van" type="number" step=".10" value="3.50"></div>
+          <div class="cfg-row"><span>🛻 Caminhonete</span><input class="cfg-inp" id="cfg-km-caminhonete" type="number" step=".10" value="3.00"></div>
+          <div class="cfg-row"><span>🚛 Caminhão</span><input class="cfg-inp" id="cfg-km-caminhao" type="number" step=".10" value="5.00"></div>
+
+          <div class="cfg-secao">📍 Corrida mínima (R$)</div>
+          <div class="cfg-row"><span>🚗 Carro</span><input class="cfg-inp" id="cfg-min-carro" type="number" step=".50" value="10.00"></div>
+          <div class="cfg-row"><span>🛵 Moto</span><input class="cfg-inp" id="cfg-min-moto" type="number" step=".50" value="7.00"></div>
+          <div class="cfg-row"><span>🚐 Van</span><input class="cfg-inp" id="cfg-min-van" type="number" step=".50" value="25.00"></div>
+          <div class="cfg-row"><span>🛻 Caminhonete</span><input class="cfg-inp" id="cfg-min-caminhonete" type="number" step=".50" value="20.00"></div>
+          <div class="cfg-row"><span>🚛 Caminhão</span><input class="cfg-inp" id="cfg-min-caminhao" type="number" step=".50" value="50.00"></div>
+
+          <div class="cfg-secao">💼 Comissão da plataforma (%)</div>
+          <div class="cfg-row"><span>🚗 Corridas / Delivery</span><input class="cfg-inp" id="configComissao" type="number" step="1" value="15"></div>
+          <div class="cfg-row"><span>📦 Carreto / Mudança / Van</span><input class="cfg-inp" id="cfg-com-orc" type="number" step="1" value="10"></div>
+
+          <div class="cfg-secao">🌧️ Taxas extras (motorista ativa) (%)</div>
+          <div class="cfg-row"><span>🌧️ Chuva</span><input class="cfg-inp" id="configChuva" type="number" step="1" value="20"></div>
+          <div class="cfg-row"><span>🌾 Zona Rural</span><input class="cfg-inp" id="configRural" type="number" step="1" value="30"></div>
+          <div class="cfg-row"><span>🌙 Noite (18h–23h)</span><input class="cfg-inp" id="configNoite" type="number" step="1" value="15"></div>
+          <div class="cfg-row"><span>🌃 Madrugada (0h–6h)</span><input class="cfg-inp" id="configMadrugada" type="number" step="1" value="30"></div>
+
+          <div class="cfg-secao">👥 Ajudantes — mudança (R$)</div>
+          <div class="cfg-row"><span>👥 1 ajudante</span><input class="cfg-inp" id="cfg-aj1" type="number" step="5" value="50"></div>
+          <div class="cfg-row"><span>👥👥 2 ajudantes</span><input class="cfg-inp" id="cfg-aj2" type="number" step="5" value="90"></div>
+
+          <div class="cfg-secao">🔐 Segurança</div>
+          <div class="cfg-row"><span>Senha admin</span><input class="cfg-inp" id="configSenhaAdmin" type="password" value="admin123" style="width:120px"></div>
+
+          <button class="btn-primary" onclick="salvarConfig()" style="margin-top:16px">SALVAR CONFIGURAÇÕES ✓</button>
+        </div>
+
+        <div class="card">
+          <div class="card-title">📊 Resumo financeiro</div>
+          <div class="config-row">
+            <span class="config-label">Faturamento total</span>
+            <span class="config-value" id="confFaturamento">R$ 0,00</span>
+          </div>
+          <div class="config-row">
+            <span class="config-label">Sua comissão (15%)</span>
+            <span class="config-value" id="confComissao">R$ 0,00</span>
+          </div>
+          <div class="config-row">
+            <span class="config-label">Total corridas</span>
+            <span class="config-value" id="confTotal">0</span>
+          </div>
+        </div>
+      </div>
+      <!-- Admin: Financeiro -->
+      <div class="admin-content" id="admin-financeiro">
+        <div class="card">
+          <div class="card-title">📊 Resumo Financeiro</div>
+          <div class="fin-row"><span class="fin-lbl">Faturamento total</span><span class="fin-val" id="fin-faturamento">R$ 0,00</span></div>
+          <div class="fin-row"><span class="fin-lbl">Sua comissão total</span><span class="fin-val" id="fin-comissao">R$ 0,00</span></div>
+          <div class="fin-row"><span class="fin-lbl">Corridas concluídas</span><span class="fin-val" id="fin-corridas">0</span></div>
+          <div class="fin-row"><span class="fin-lbl">Serviços fechados</span><span class="fin-val" id="fin-servicos">0</span></div>
+          <div class="fin-row"><span class="fin-lbl">Motoristas online agora</span><span class="fin-val" id="fin-online">0</span></div>
+        </div>
+        <div id="lista-fin-detalhe"><div class="loading-dots"><span></span><span></span><span></span></div></div>
+      </div>
+
+      <!-- Registrar serviço fechado (motorista) - aparece na página motorista -->
+
+    </div>
+
+  </div><!-- /main-content -->
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav" id="bottomNav">
+    <!-- preenchido por JS -->
+  </div>
+</div>
+
+<script>
+// ===== FIREBASE CONFIG =====
+const firebaseConfig = {
+  apiKey: "AIzaSyDqC0bDjdK2EkAJCIidEYrU0",
+  authDomain: "barbearia-juninho-e-mirinho.firebaseapp.com",
+  databaseURL: "https://barbearia-juninho-e-mirinho.firebaseio.com",
+  projectId: "barbearia-juninho-e-mirinho",
+  storageBucket: "barbearia-juninho-e-mirinho.appspot.com",
+  messagingSenderId: "942836608130",
+  appId: "1:942836608130:web:1e6bca4780f314b88d189b",
+  measurementId: "G-W2PFG9V9MZ"
+};
+
+// ===== ESTADO GLOBAL =====
+let db, user, role, corridaAtualId, corridaListener, motoristasListener;
+let mapaInit = false, mapa;
+let starsAtual = 0;
+let alertaCorridaId = null;
+
+// Config padrão
+let config = {
+  minima: 10.00,
+  porKm: 2.00,
+  comissao: 15,
+  senhaAdmin: 'admin123',
+  taxaRural: 30,
+  taxaChuva: 20,
+  taxaNoite: 15,
+  taxaMadrugada: 30,
+  // Por veículo
+  kmCarro: 2.00, kmMoto: 1.50, kmVan: 3.50, kmCaminhonete: 3.00, kmCaminhao: 5.00,
+  minCarro: 10, minMoto: 7, minVan: 25, minCaminhonete: 20, minCaminhao: 50,
+  comOrc: 10,
+  aj1: 50, aj2: 90
+};
+
+// ===== INIT =====
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    document.getElementById('splash').style.display = 'none';
+    document.getElementById('loginModal').style.display = 'flex';
+    initFirebase();
+  }, 2000);
+});
+
+function initFirebase() {
+  try {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+    carregarConfig();
+  } catch(e) {
+    // Firebase já inicializado
+    db = firebase.firestore();
+  }
+}
+
+// ===== LOGIN =====
+let roleAtual = 'passageiro';
+
+function selectRole(r) {
+  roleAtual = r;
+  document.querySelectorAll('.role-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + r).classList.add('active');
+
+  if (r === 'admin') {
+    document.getElementById('loginFields').style.display = 'none';
+    document.getElementById('adminFields').style.display = 'block';
+  } else {
+    document.getElementById('loginFields').style.display = 'block';
+    document.getElementById('adminFields').style.display = 'none';
+  }
+}
+
+async function fazerLogin() {
+  if (roleAtual === 'admin') {
+    const senha = document.getElementById('adminSenha').value;
+    if (senha === config.senhaAdmin || senha === 'admin123') {
+      user = { nome: 'Administrador', tel: 'admin', role: 'admin', id: 'admin' };
+      role = 'admin';
+      entrarApp();
+    } else {
+      showToast('Senha incorreta ❌');
+    }
+    return;
+  }
+
+  const nome = document.getElementById('loginNome').value.trim();
+  const tel = document.getElementById('loginTel').value.trim();
+
+  if (!nome || !tel) {
+    showToast('Preencha nome e telefone');
+    return;
+  }
+
+  if (roleAtual === 'motorista') {
+    // Busca motorista cadastrado
+    try {
+      const snap = await db.collection('motoristas')
+        .where('tel', '==', tel).get();
+      if (snap.empty) {
+        showToast('Motorista não cadastrado. Fale com o admin.');
+        return;
+      }
+      const doc = snap.docs[0];
+      user = { ...doc.data(), id: doc.id, role: 'motorista' };
+      role = 'motorista';
+      entrarApp();
+    } catch(e) {
+      // Demo mode
+      user = { nome, tel, role: 'motorista', id: 'motor_' + Date.now(), carro: 'Celta Prata', placa: 'ABC-1234' };
+      role = 'motorista';
+      entrarApp();
+    }
+    return;
+  }
+
+  // Passageiro — cria/recupera
+  user = { nome, tel, role: 'passageiro', id: 'pass_' + tel.replace(/\D/g,'') };
+  role = 'passageiro';
+  entrarApp();
+}
+
+function entrarApp() {
+  document.getElementById('loginModal').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  document.getElementById('app').style.flexDirection = 'column';
+
+  document.getElementById('headerNome').textContent = user.nome;
+  document.getElementById('headerRole').textContent =
+    role === 'passageiro' ? 'Passageiro' :
+    role === 'motorista' ? 'Motorista' : 'Administrador';
+  document.getElementById('headerAvatar').textContent = user.nome.charAt(0).toUpperCase();
+
+  setupNav();
+
+  if (role === 'passageiro') {
+    showPage('passageiro');
+    initMapa();
+    escutarCorridaPassageiro();
+    setTimeout(carregarCondicoesPlataforma, 800);
+    setTimeout(mostrarFavoritos, 600);
+  } else if (role === 'motorista') {
+    showPage('motorista');
+    initMapa();
+    // Inicia escuta imediatamente ao entrar
+    escutarCorridasMotorista();
+    setTimeout(iniciarCondicoesMotorista, 1000);
+    setTimeout(initFCM, 1500);
+    setTimeout(atualizarStatsMotorista, 800);
+  } else {
+    showPage('admin');
+    carregarDadosAdmin();
+  }
+}
+
+function logout() {
+  if (corridaListener) corridaListener();
+  if (motoristasListener) motoristasListener();
+  user = null; role = null;
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('loginModal').style.display = 'flex';
+  document.getElementById('loginNome').value = '';
+  document.getElementById('loginTel').value = '';
+  document.getElementById('adminSenha').value = '';
+  selectRole('passageiro');
+}
+
+// ===== MAPA =====
+function initMapa() {
+  if (mapaInit) { mapa.invalidateSize(); return; }
+  mapa = L.map('map').setView([-19.2650, -44.4069], 14);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(mapa);
+  mapaInit = true;
+  if (role === 'passageiro') {
+    detectarLocalizacao();
+    setupAutocomplete('origem', 'lista-origem');
+    setupAutocomplete('destino', 'lista-destino');
+  } else {
+    navigator.geolocation && navigator.geolocation.getCurrentPosition(pos => {
+      mapa.setView([pos.coords.latitude, pos.coords.longitude], 15);
+      L.marker([pos.coords.latitude, pos.coords.longitude]).addTo(mapa).bindPopup('Você está aqui').openPopup();
+    });
+  }
+}
+
+// ===== CONDIÇÕES DO MOTORISTA =====
+let condicoesMotorista = { chuva: false, rural: false, noite: false, madrugada: false };
+
+function iniciarCondicoesMotorista() {
+  // Detecta hora automaticamente
+  const hora = new Date().getHours();
+  if (hora >= 0 && hora < 6) {
+    condicoesMotorista.madrugada = true;
+    document.getElementById('btn-cond-madrugada').classList.add('ativo-madrugada');
+    showToast('🌃 Madrugada detectada automaticamente');
+  } else if (hora >= 18 || hora >= 22) {
+    condicoesMotorista.noite = true;
+    document.getElementById('btn-cond-noite').classList.add('ativo-noite');
+    showToast('🌙 Noite detectada automaticamente');
+  }
+  atualizarBadgesCondicoes();
+  atualizarResumoCondicoes();
+}
+
+function atualizarBadgesCondicoes() {
+  document.getElementById('badge-chuva').textContent = `+${config.taxaChuva || 20}%`;
+  document.getElementById('badge-rural').textContent = `+${config.taxaRural || 30}%`;
+  document.getElementById('badge-noite').textContent = `+${config.taxaNoite || 15}%`;
+  document.getElementById('badge-madrugada').textContent = `+${config.taxaMadrugada || 30}%`;
+}
+
+function toggleCondicaoMotorista(tipo) {
+  condicoesMotorista[tipo] = !condicoesMotorista[tipo];
+  const ativo = condicoesMotorista[tipo];
+  const btn = document.getElementById('btn-cond-' + tipo);
+  const classes = { chuva: 'ativo-chuva', rural: 'ativo-rural', noite: 'ativo-noite', madrugada: 'ativo-madrugada' };
+  
+  if (ativo) {
+    btn.classList.add(classes[tipo]);
+    const nomes = { chuva: 'Chuva', rural: 'Zona Rural', noite: 'Noite', madrugada: 'Madrugada' };
+    const taxas = { chuva: config.taxaChuva, rural: config.taxaRural, noite: config.taxaNoite, madrugada: config.taxaMadrugada };
+    showToast(`+${taxas[tipo]}% ativado para ${nomes[tipo]}`);
+  } else {
+    btn.classList.remove(classes[tipo]);
+  }
+  
+  // Salva condições globais no Firebase — passageiro vê automaticamente
+  if (db) {
+    db.collection('config').doc('condicoes').set({
+      chuva: condicoesMotorista.chuva,
+      rural: condicoesMotorista.rural,
+      noite: condicoesMotorista.noite,
+      madrugada: condicoesMotorista.madrugada,
+      atualizadoEm: firebase.firestore.FieldValue.serverTimestamp()
+    }).catch(()=>{});
+  }
+  
+  atualizarResumoCondicoes();
+}
+
+function atualizarResumoCondicoes() {
+  const resumo = document.getElementById('condicoes-resumo');
+  const tags = document.getElementById('condicoes-tags');
+  const ativas = [];
+  
+  if (condicoesMotorista.chuva) ativas.push({ label: '🌧️ Chuva +' + (config.taxaChuva||20) + '%', cor: 'var(--azul)' });
+  if (condicoesMotorista.rural) ativas.push({ label: '🌾 Rural +' + (config.taxaRural||30) + '%', cor: 'var(--laranja)' });
+  if (condicoesMotorista.noite) ativas.push({ label: '🌙 Noite +' + (config.taxaNoite||15) + '%', cor: '#9C27B0' });
+  if (condicoesMotorista.madrugada) ativas.push({ label: '🌃 Madrugada +' + (config.taxaMadrugada||30) + '%', cor: '#3F51B5' });
+
+  if (ativas.length > 0) {
+    tags.innerHTML = ativas.map(a => `<span class="condicao-tag" style="background:${a.cor}22;color:${a.cor};border:1px solid ${a.cor}">${a.label}</span>`).join('');
+    resumo.classList.add('show');
+  } else {
+    resumo.classList.remove('show');
+    tags.innerHTML = '';
+  }
+}
+
+// ===== LÊ CONDIÇÕES DA PLATAFORMA (para passageiro) =====
+async function carregarCondicoesPlataforma() {
+  try {
+    const snap = await db.collection('config').doc('condicoes').get();
+    const conds = snap.exists ? snap.data() : {};
+    temChuva = conds.chuva || false;
+    const hora = new Date().getHours();
+
+    const avChuva = document.getElementById('aviso-chuva');
+    const avNoite = document.getElementById('aviso-noite');
+    const avMadrugada = document.getElementById('aviso-madrugada');
+
+    if (avChuva) {
+      avChuva.classList.toggle('show', temChuva);
+      const t = document.getElementById('texto-aviso-chuva');
+      if (t) t.textContent = `Preços com +${config.taxaChuva || 20}% por conta da chuva`;
+    }
+    if (avNoite) {
+      const isNoite = hora >= 18 && hora < 24 && (config.taxaNoite || 0) > 0;
+      avNoite.classList.toggle('show', isNoite);
+      const t = document.getElementById('texto-aviso-noite');
+      if (t) t.textContent = `Preços com +${config.taxaNoite || 15}% — período noturno`;
+    }
+    if (avMadrugada) {
+      const isMadrugada = hora >= 0 && hora < 6 && (config.taxaMadrugada || 0) > 0;
+      avMadrugada.classList.toggle('show', isMadrugada);
+      const t = document.getElementById('texto-aviso-madrugada');
+      if (t) t.textContent = `Preços com +${config.taxaMadrugada || 30}% — madrugada`;
+    }
+
+    const lr = document.getElementById('label-taxa-rural');
+    if (lr) lr.textContent = `(+${config.taxaRural || 30}% no valor)`;
+
+    atualizarExtrasInfo();
+  } catch(e) { atualizarExtrasInfo(); }
+}
+
+// ===== PARADAS =====
+let paradas = [];
+let tipoCorrida = 'cidade'; // 'cidade' ou 'rural'
+let temChuva = false;
+
+function adicionarParada() {
+  if (paradas.length >= 3) { showToast('Máximo de 3 paradas'); return; }
+  const idx = paradas.length;
+  paradas.push('');
+  const area = document.getElementById('area-paradas');
+  const wrap = document.createElement('div');
+  wrap.className = 'autocomplete-wrap';
+  wrap.id = 'wrap-parada-' + idx;
+  wrap.innerHTML = `
+    <div class="parada-item">
+      <div class="address-icon" style="background:rgba(255,193,7,0.2);flex-shrink:0">🔵</div>
+      <input type="text" id="parada-${idx}" placeholder="Parada ${idx+1} — Ex: Farmácia, Mercado" autocomplete="off">
+      <button class="btn-remover-parada" onclick="removerParada(${idx})">×</button>
+    </div>
+    <div class="autocomplete-lista" id="lista-parada-${idx}"></div>
+  `;
+  area.appendChild(wrap);
+  setupAutocomplete('parada-' + idx, 'lista-parada-' + idx);
+}
+
+function removerParada(idx) {
+  const el = document.getElementById('wrap-parada-' + idx);
+  if (el) el.remove();
+  paradas.splice(idx, 1);
+  // Renumera
+  document.querySelectorAll('[id^="wrap-parada-"]').forEach((el, i) => {
+    el.id = 'wrap-parada-' + i;
+    const inp = el.querySelector('input');
+    if (inp) inp.placeholder = 'Parada ' + (i+1) + ' — Ex: Farmácia, Mercado';
+  });
+}
+
+function selecionarTipo(tipo) {
+  tipoCorrida = tipo;
+  document.getElementById('btn-cidade').className = 'tipo-btn' + (tipo === 'cidade' ? ' ativo-cidade' : '');
+  document.getElementById('btn-rural').className = 'tipo-btn' + (tipo === 'rural' ? ' ativo-rural' : '');
+  atualizarExtrasInfo();
+}
+
+function toggleChuva() {
+  temChuva = !temChuva;
+  const btn = document.getElementById('btnChuva');
+  const label = document.getElementById('labelChuva');
+  if (temChuva) {
+    btn.classList.add('ativo');
+    label.textContent = '✅ +20% ativo';
+  } else {
+    btn.classList.remove('ativo');
+    label.textContent = '+20% se ativo';
+  }
+  atualizarExtrasInfo();
+}
+
+function atualizarExtrasInfo() {
+  const info = document.getElementById('extrasInfo');
+  if (!info) return;
+  const msgs = [];
+  const hora = new Date().getHours();
+
+  if (tipoCorrida === 'rural') msgs.push(`🌾 +${config.taxaRural || 30}% zona rural`);
+  if (temChuva) msgs.push(`🌧️ +${config.taxaChuva || 20}% chuva`);
+  if (hora >= 18 && hora < 24 && (config.taxaNoite || 0) > 0) msgs.push(`🌙 +${config.taxaNoite}% noite`);
+  if (hora >= 0 && hora < 6 && (config.taxaMadrugada || 0) > 0) msgs.push(`🌃 +${config.taxaMadrugada}% madrugada`);
+
+  if (msgs.length > 0) {
+    info.innerHTML = '⚡ ' + msgs.join(' &nbsp;•&nbsp; ');
+    info.classList.add('show');
+  } else {
+    info.classList.remove('show');
+  }
+}
+
+function aplicarExtras(valor) {
+  let v = valor;
+  const hora = new Date().getHours();
+  if (tipoCorrida === 'rural') v *= (1 + (config.taxaRural || 30) / 100);
+  if (temChuva) v *= (1 + (config.taxaChuva || 20) / 100);
+  if (hora >= 18 && hora < 24 && (config.taxaNoite || 0) > 0) v *= (1 + config.taxaNoite / 100);
+  if (hora >= 0 && hora < 6 && (config.taxaMadrugada || 0) > 0) v *= (1 + config.taxaMadrugada / 100);
+  return v;
+}
+
+// ===== LOCALIZAÇÃO AUTOMÁTICA =====
+let coordsUsuario = null;
+function detectarLocalizacao() {
+  if (!navigator.geolocation) return;
+  showToast('Detectando sua localização... 📍');
+  navigator.geolocation.getCurrentPosition(async pos => {
+    coordsUsuario = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+    if (mapa) { mapa.setView([coordsUsuario.lat, coordsUsuario.lon], 15); L.marker([coordsUsuario.lat, coordsUsuario.lon]).addTo(mapa).bindPopup('📍 Você está aqui').openPopup(); }
+    try {
+      const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${coordsUsuario.lat}&lon=${coordsUsuario.lon}&format=json&accept-language=pt-BR`);
+      const data = await resp.json();
+      if (data && data.address) {
+        const a = data.address;
+        const rua = a.road || a.pedestrian || a.suburb || '';
+        const numero = a.house_number ? `, ${a.house_number}` : '';
+        const bairro = a.suburb || a.neighbourhood || a.quarter || '';
+        let end = rua + numero + (bairro && bairro !== rua ? ' — ' + bairro : '');
+        if (end.trim()) {
+          const inp = document.getElementById('origem');
+          inp.value = end.trim();
+          inp.style.color = '#00C853';
+          inp._coords = coordsUsuario;
+        }
+      }
+    } catch(e) {}
+  }, () => { showToast('Ative o GPS para detectar sua localização'); }, { enableHighAccuracy: true });
+}
+
+// ===== AUTOCOMPLETE =====
+let acTimer = null;
+function setupAutocomplete(inputId, listaId) {
+  const input = document.getElementById(inputId);
+  const lista = document.getElementById(listaId);
+  input.addEventListener('input', () => {
+    input.style.color = ''; input._coords = null;
+    clearTimeout(acTimer);
+    const val = input.value.trim();
+    if (val.length < 3) { lista.style.display = 'none'; return; }
+    acTimer = setTimeout(async () => {
+      try {
+        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(val + ', Paraopeba, Minas Gerais, Brasil')}&format=json&limit=5&accept-language=pt-BR&countrycodes=br`;
+        const data = await (await fetch(url)).json();
+        if (!data.length) { lista.style.display = 'none'; return; }
+        lista.innerHTML = '';
+        data.forEach(item => {
+          const endCurto = item.display_name.split(',').slice(0,3).map(p=>p.trim()).join(', ');
+          const div = document.createElement('div');
+          div.className = 'autocomplete-item';
+          div.innerHTML = `<span style="margin-right:8px">📍</span>${endCurto}`;
+          div.onclick = () => { input.value = endCurto; input.style.color = '#00C853'; input._coords = { lat: parseFloat(item.lat), lon: parseFloat(item.lon) }; lista.style.display = 'none'; };
+          lista.appendChild(div);
+        });
+        lista.style.display = 'block';
+      } catch(e) { lista.style.display = 'none'; }
+    }, 600);
+  });
+  document.addEventListener('click', e => { if (!lista.contains(e.target) && e.target !== input) lista.style.display = 'none'; });
+}
+
+// ===== CÁLCULO DE CORRIDA =====
+function calcularPreco(km) {
+  return Math.max(config.minima, km * config.porKm);
+}
+
+async function calcularCorrida() {
+  const origem = document.getElementById('origem').value.trim();
+  const destino = document.getElementById('destino').value.trim();
+
+  if (!origem || !destino) {
+    showToast('Preencha origem e destino');
+    return;
+  }
+
+  showToast('Calculando rota... 🗺️');
+
+  try {
+    // Usa coordenadas do autocomplete se disponíveis, senão busca
+    const cidadeBase = 'Paraopeba, MG, Brasil';
+    const inpOrigem = document.getElementById('origem');
+    const inpDestino = document.getElementById('destino');
+
+    const [coordOrigem, coordDestino] = await Promise.all([
+      inpOrigem._coords ? Promise.resolve(inpOrigem._coords) : geocodificar(origem + ', ' + cidadeBase),
+      inpDestino._coords ? Promise.resolve(inpDestino._coords) : geocodificar(destino + ', ' + cidadeBase)
+    ]);
+
+    if (!coordOrigem || !coordDestino) {
+      showToast('Não encontrei o endereço. Tente ser mais específico.');
+      return;
+    }
+
+    // Calcula rota real via OSRM (gratuito, sem chave)
+    const url = `https://router.project-osrm.org/route/v1/driving/${coordOrigem.lon},${coordOrigem.lat};${coordDestino.lon},${coordDestino.lat}?overview=false`;
+    const resp = await fetch(url);
+    const data = await resp.json();
+
+    let km, tempo;
+
+    if (data.routes && data.routes.length > 0) {
+      km = data.routes[0].distance / 1000; // metros → km
+      tempo = Math.round(data.routes[0].duration / 60); // segundos → minutos
+    } else {
+      // Fallback: distância em linha reta com fator de correção
+      const distReta = distanciaLatLng(coordOrigem.lat, coordOrigem.lon, coordDestino.lat, coordDestino.lon);
+      km = distReta * 1.3; // fator de correção para ruas
+      tempo = Math.round(km * 3 + 2);
+    }
+
+    // Garante mínimo de 0.3km
+    km = Math.max(0.3, km);
+    const kmFormatado = km.toFixed(1);
+    const valorBase = calcularPreco(km);
+    const valor = aplicarExtras(valorBase);
+    tempo = Math.max(2, tempo);
+    // Tempo extra na zona rural
+    if (tipoCorrida === 'rural') tempo = Math.round(tempo * 1.4);
+
+    document.getElementById('valorEstimado').textContent = `R$ ${valor.toFixed(2).replace('.',',')}`;
+    document.getElementById('detalheDistancia').textContent = `${kmFormatado} km pela rota`;
+    document.getElementById('tempoEstimado').textContent = `~${tempo} min`;
+    document.getElementById('boxPreco').style.display = 'block';
+
+    // Atualiza mapa com os dois pontos
+    if (mapa) {
+      mapa.eachLayer(layer => { if (layer instanceof L.Marker || layer instanceof L.Polyline) mapa.removeLayer(layer); });
+      const markerO = L.marker([coordOrigem.lat, coordOrigem.lon]).addTo(mapa).bindPopup('📍 Origem');
+      const markerD = L.marker([coordDestino.lat, coordDestino.lon]).addTo(mapa).bindPopup('🏁 Destino');
+      mapa.fitBounds([[coordOrigem.lat, coordOrigem.lon],[coordDestino.lat, coordDestino.lon]], {padding:[40,40]});
+    }
+
+    // Pega paradas digitadas
+    const paradasTexto = [];
+    document.querySelectorAll('[id^="parada-"]').forEach(inp => { if(inp.value.trim()) paradasTexto.push(inp.value.trim()); });
+    window._corridaTemp = { origem, destino, paradas: paradasTexto, km: parseFloat(kmFormatado), valor: parseFloat(valor.toFixed(2)), tempo, tipoCorrida, temChuva };
+
+  } catch(e) {
+    // Fallback simples se não tiver internet
+    const km = Math.max(0.5, Math.min(8, Math.random() * 3 + 1));
+    const valor = aplicarExtras(calcularPreco(km));
+    const tempo = Math.round(km * 3 + 2);
+    document.getElementById('valorEstimado').textContent = `R$ ${valor.toFixed(2).replace('.',',')}`;
+    document.getElementById('detalheDistancia').textContent = `${km.toFixed(1)} km estimado`;
+    document.getElementById('tempoEstimado').textContent = `~${tempo} min`;
+    document.getElementById('boxPreco').style.display = 'block';
+    window._corridaTemp = { origem, destino, km: parseFloat(km.toFixed(1)), valor: parseFloat(valor.toFixed(2)), tempo };
+  }
+}
+
+async function geocodificar(endereco) {
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(endereco)}&format=json&limit=1`;
+    const resp = await fetch(url, { headers: { 'Accept-Language': 'pt-BR' } });
+    const data = await resp.json();
+    if (data.length > 0) return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+    return null;
+  } catch(e) { return null; }
+}
+
+function distanciaLatLng(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) *
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+async function solicitarCorrida() {
+  if (!window._corridaTemp) { showToast('Calcule a corrida primeiro'); return; }
+
+  const c = window._corridaTemp;
+
+  const corrida = {
+    passageiroId: user.id,
+    passageiroNome: user.nome,
+    passageiroTel: user.tel,
+    origem: c.origem,
+    destino: c.destino,
+    km: c.km,
+    valor: c.valor,
+    tipoCorrida: c.tipoCorrida || 'cidade',
+    temChuva: c.temChuva || false,
+    paradas: c.paradas || [],
+    status: 'aguardando',
+    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+    data: new Date().toLocaleDateString('pt-BR'),
+    hora: new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})
+  };
+
+  try {
+    const ref = await db.collection('corridas').add(corrida);
+    corridaAtualId = ref.id;
+    showToast('Corrida solicitada! Aguardando motorista...');
+
+    document.getElementById('estado-solicitar').style.display = 'none';
+    document.getElementById('boxPreco').style.display = 'none';
+    document.getElementById('estado-aguardando').style.display = 'block';
+    document.getElementById('valorAguardando').textContent = `R$ ${c.valor.toFixed(2).replace('.',',')}`;
+    document.getElementById('rotaAguardando').textContent = `${c.origem} → ${c.destino}`;
+
+    escutarCorridaPassageiro();
+  } catch(e) {
+    showToast('Erro ao solicitar. Tente novamente.');
+    console.error(e);
+  }
+}
+
+async function cancelarCorrida() {
+  if (!corridaAtualId) return;
+  try {
+    await db.collection('corridas').doc(corridaAtualId).update({ status: 'cancelada' });
+    resetarEstadoPassageiro();
+    showToast('Corrida cancelada');
+  } catch(e) {
+    showToast('Erro ao cancelar');
+  }
+}
+
+// ===== ESCUTAR CORRIDA (PASSAGEIRO) =====
+function escutarCorridaPassageiro() {
+  if (!db || !user) return;
+
+  if (corridaListener) corridaListener();
+
+  corridaListener = db.collection('corridas')
+    .where('passageiroId', '==', user.id)
+    .where('status', 'in', ['aguardando','aceita','em_viagem'])
+    .orderBy('timestamp', 'desc')
+    .limit(1)
+    .onSnapshot(snap => {
+      if (snap.empty) return;
+      const doc = snap.docs[0];
+      const c = doc.data();
+      corridaAtualId = doc.id;
+      atualizarEstadoPassageiro(c);
+    });
+}
+
+function atualizarEstadoPassageiro(c) {
+  esconderEstados();
+
+  if (c.status === 'aguardando') {
+    document.getElementById('estado-aguardando').style.display = 'block';
+    document.getElementById('valorAguardando').textContent = `R$ ${c.valor.toFixed(2).replace('.',',')}`;
+    document.getElementById('rotaAguardando').textContent = `${c.origem} → ${c.destino}`;
+
+  } else if (c.status === 'aceita') {
+    document.getElementById('estado-aceita').style.display = 'block';
+    document.getElementById('nomeMotoristaPassageiro').textContent = c.motoristaNome || '-';
+    document.getElementById('carroMotoristaPassageiro').textContent = `${c.motoristaCarro || '-'} • ${c.motoristaPlaca || '-'}`;
+    document.getElementById('avatarMotoristaPassageiro').textContent = (c.motoristaNome || 'M').charAt(0);
+    document.getElementById('valorAceita').textContent = `R$ ${c.valor.toFixed(2).replace('.',',')}`;
+    document.getElementById('destinoAceita').textContent = c.destino;
+
+  } else if (c.status === 'em_viagem') {
+    document.getElementById('estado-viagem').style.display = 'block';
+    document.getElementById('nomeMotoristaViagem').textContent = c.motoristaNome || '-';
+    document.getElementById('avatarMotoristaViagem').textContent = (c.motoristaNome || 'M').charAt(0);
+    document.getElementById('destinoViagem').textContent = c.destino;
+    document.getElementById('valorViagem').textContent = `R$ ${c.valor.toFixed(2).replace('.',',')}`;
+
+  } else if (c.status === 'concluida') {
+    document.getElementById('estado-avaliar').style.display = 'block';
+    document.getElementById('resumoAvaliar').textContent =
+      `${c.origem} → ${c.destino} • R$ ${c.valor.toFixed(2).replace('.',',')} • ${c.km}km`;
+    if (corridaListener) { corridaListener(); corridaListener = null; }
+  }
+}
+
+function esconderEstados() {
+  ['estado-solicitar','estado-aguardando','estado-aceita','estado-viagem','estado-avaliar']
+    .forEach(id => { document.getElementById(id).style.display = 'none'; });
+}
+
+function resetarEstadoPassageiro() {
+  corridaAtualId = null;
+  window._corridaTemp = null;
+  document.getElementById('origem').value = '';
+  document.getElementById('destino').value = '';
+  document.getElementById('boxPreco').style.display = 'none';
+  esconderEstados();
+  document.getElementById('estado-solicitar').style.display = 'block';
+  document.getElementById('form-corrida').style.display = 'block';
+  document.getElementById('form-delivery').style.display = 'none';
+  document.getElementById('form-orcamento').style.display = 'none';
+  document.getElementById('area-paradas').innerHTML = '';
+}
+
+// ===== AVALIAÇÃO =====
+function avaliar(n) {
+  starsAtual = n;
+  document.querySelectorAll('#starsAvaliar .star').forEach((s, i) => {
+    s.classList.toggle('active', i < n);
+  });
+}
+
+async function confirmarAvaliacao() {
+  if (!corridaAtualId) { resetarEstadoPassageiro(); return; }
+  try {
+    await db.collection('corridas').doc(corridaAtualId).update({
+      avaliacao: starsAtual || 5,
+      avaliadaEm: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  } catch(e) {}
+  showToast('Obrigado pela avaliação! ⭐');
+  setTimeout(resetarEstadoPassageiro, 1200);
+}
+
+// ===== MOTORISTA: ESCUTAR CORRIDAS =====
+function escutarCorridasMotorista() {
+  if (!db) return;
+
+  // Escuta corridas aguardando — SEM orderBy pra evitar erro de índice
+  db.collection('corridas')
+    .where('status', '==', 'aguardando')
+    .onSnapshot(snap => {
+      if (snap.empty) { document.getElementById('novaCorridaAlerta').style.display = 'none'; return; }
+      if (!document.getElementById('toggleOnline').checked) return;
+
+      // Pega primeira corrida não vista
+      let melhor = null;
+      for (const doc of snap.docs) {
+        if (doc.id === alertaCorridaId) continue;
+        melhor = doc;
+        break;
+      }
+      if (!melhor) return;
+
+      alertaCorridaId = melhor.id;
+      const c = melhor.data();
+      let rotaTexto = c.origem || '';
+      if (c.paradas && c.paradas.length) rotaTexto += ' → ' + c.paradas.join(' → ');
+      rotaTexto += ' → ' + (c.destino || '');
+      const tipoIcon = c.tipoCorrida === 'rural' ? ' 🌾 RURAL' : '';
+      document.getElementById('alertaRota').textContent = rotaTexto + tipoIcon;
+      document.getElementById('alertaValor').textContent = `R$ ${(c.valor||0).toFixed(2).replace('.',',')}`;
+      document.getElementById('alertaDist').textContent = `${c.km||0} km`;
+      document.getElementById('novaCorridaAlerta').style.display = 'block';
+
+      // Som 3x
+      try {
+        const ctx = new AudioContext();
+        [0, 0.2, 0.4].forEach(t => {
+          const o = ctx.createOscillator(), g = ctx.createGain();
+          o.connect(g); g.connect(ctx.destination);
+          o.frequency.value = 1000; g.gain.setValueAtTime(0.4, ctx.currentTime + t);
+          g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.2);
+          o.start(ctx.currentTime + t); o.stop(ctx.currentTime + t + 0.25);
+        });
+      } catch(e) {}
+    });
+
+  // Escuta corrida aceita pelo motorista
+  if (user && user.id) {
+    db.collection('corridas')
+      .where('motoristaId', '==', user.id)
+      .where('status', 'in', ['aceita','em_viagem'])
+      .limit(1)
+      .onSnapshot(snap => {
+        if (snap.empty) {
+          document.getElementById('motorista-corrida-ativa').style.display = 'none';
+          document.getElementById('motorista-sem-corrida').style.display = 'block';
+          return;
+        }
+        const doc = snap.docs[0];
+        corridaAtualId = doc.id;
+        const c = doc.data();
+        mostrarCorridaAtivaMotorista(c);
+      });
+  }
+}
+
+function mostrarCorridaAtivaMotorista(c) {
+  document.getElementById('motorista-corrida-ativa').style.display = 'block';
+  document.getElementById('motorista-sem-corrida').style.display = 'none';
+
+  let origemTexto = c.origem;
+  if (c.paradas && c.paradas.length) origemTexto += ' → ' + c.paradas.join(' → ');
+  const tipoLabel = c.tipoCorrida === 'rural' ? ' 🌾' : '';
+  const chuvaLabel = c.temChuva ? ' 🌧️' : '';
+  document.getElementById('origemCorridaMotorista').textContent = origemTexto + tipoLabel + chuvaLabel;
+  document.getElementById('destinoCorridaMotorista').textContent = c.destino;
+  document.getElementById('passageiroNomeMotorista').textContent = c.passageiroNome;
+  document.getElementById('valorCorridaMotorista').textContent = `R$ ${c.valor.toFixed(2).replace('.',',')}`;
+
+  const comissao = c.valor * (config.comissao / 100);
+  document.getElementById('comissaoMotorista').textContent = `R$ ${comissao.toFixed(2).replace('.',',')}`;
+
+  if (c.status === 'aceita') {
+    document.getElementById('statusCorridaMotorista').textContent = '🔄 A caminho do passageiro';
+    document.getElementById('statusCorridaMotorista').className = 'badge badge-amarelo';
+    document.getElementById('btnIniciarViagem').style.display = 'block';
+    document.getElementById('btnConcluir').style.display = 'none';
+  } else if (c.status === 'em_viagem') {
+    document.getElementById('statusCorridaMotorista').textContent = '🚗 Em viagem';
+    document.getElementById('statusCorridaMotorista').className = 'badge badge-azul';
+    document.getElementById('btnIniciarViagem').style.display = 'none';
+    document.getElementById('btnConcluir').style.display = 'block';
+  }
+}
+
+async function aceitarCorridaAlerta() {
+  if (!alertaCorridaId) return;
+  document.getElementById('novaCorridaAlerta').style.display = 'none';
+
+  try {
+    await db.collection('corridas').doc(alertaCorridaId).update({
+      status: 'aceita',
+      motoristaId: user.id,
+      motoristaNome: user.nome,
+      motoristaTel: user.tel,
+      motoristaCarro: user.carro || 'Não informado',
+      motoristaPlaca: user.placa || 'N/A',
+      aceitaEm: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    corridaAtualId = alertaCorridaId;
+    showToast('Corrida aceita! Vá buscar o passageiro 🚗');
+  } catch(e) {
+    showToast('Erro ao aceitar corrida');
+  }
+}
+
+function recusarCorridaAlerta() {
+  document.getElementById('novaCorridaAlerta').style.display = 'none';
+  alertaCorridaId = null;
+}
+
+async function iniciarViagem() {
+  if (!corridaAtualId) return;
+  try {
+    await db.collection('corridas').doc(corridaAtualId).update({ status: 'em_viagem' });
+    showToast('Viagem iniciada! Bom trajeto 🛣️');
+  } catch(e) { showToast('Erro'); }
+}
+
+async function concluirCorrida() {
+  if (!corridaAtualId) return;
+  try {
+    const snap = await db.collection('corridas').doc(corridaAtualId).get();
+    const c = snap.data();
+    const comissao = c.valor * (config.comissao / 100);
+    const ganhoMotorista = c.valor - comissao;
+
+    await db.collection('corridas').doc(corridaAtualId).update({
+      status: 'concluida',
+      concluidaEm: firebase.firestore.FieldValue.serverTimestamp(),
+      comissaoPlataforma: parseFloat(comissao.toFixed(2)),
+      ganhoMotorista: parseFloat(ganhoMotorista.toFixed(2))
+    });
+
+    // Atualiza stats do motorista
+    const hoje = new Date().toLocaleDateString('pt-BR');
+    const statsRef = db.collection('stats_motoristas').doc(user.id + '_' + hoje);
+    const statsSnap = await statsRef.get();
+    if (statsSnap.exists) {
+      await statsRef.update({
+        corridas: firebase.firestore.FieldValue.increment(1),
+        ganhos: firebase.firestore.FieldValue.increment(ganhoMotorista),
+        km: firebase.firestore.FieldValue.increment(c.km)
+      });
+    } else {
+      await statsRef.set({ corridas: 1, ganhos: ganhoMotorista, km: c.km, data: hoje, motoristaId: user.id });
+    }
+
+    atualizarStatsMotorista();
+    document.getElementById('motorista-corrida-ativa').style.display = 'none';
+    document.getElementById('motorista-sem-corrida').style.display = 'block';
+    corridaAtualId = null;
+    alertaCorridaId = null;
+    showToast(`Corrida concluída! Você ganhou R$ ${ganhoMotorista.toFixed(2).replace('.',',')} 💰`);
+  } catch(e) {
+    showToast('Erro ao concluir');
+    console.error(e);
+  }
+}
+
+async function atualizarStatsMotorista() {
+  try {
+    const hoje = new Date().toLocaleDateString('pt-BR');
+    const snap = await db.collection('stats_motoristas').doc(user.id + '_' + hoje).get();
+    if (snap.exists) {
+      const s = snap.data();
+      document.getElementById('corridasDia').textContent = s.corridas || 0;
+      document.getElementById('ganhosDia').textContent = `R$${(s.ganhos||0).toFixed(0)}`;
+      document.getElementById('kmDia').textContent = (s.km||0).toFixed(0);
+    }
+  } catch(e) {}
+}
+
+let gpsInterval = null;
+function alterarOnline() {
+  const online = document.getElementById('toggleOnline').checked;
+  document.getElementById('statusOnlineTexto').textContent =
+    online ? '✅ Você está online' : 'Você está offline';
+
+  if (online) {
+    alertaCorridaId = null; // resetar para pegar corridas pendentes
+    showToast('Você está online! Aguardando corridas 🟢');
+    escutarCorridasMotorista();
+    enviarGPSMotorista();
+    gpsInterval = setInterval(enviarGPSMotorista, 30000);
+  } else {
+    showToast('Você está offline 🔴');
+    document.getElementById('novaCorridaAlerta').style.display = 'none';
+    if (gpsInterval) { clearInterval(gpsInterval); gpsInterval = null; }
+  }
+
+  if (db && user) {
+    db.collection('motoristas').doc(user.id).update({ online }).catch(() => {});
+  }
+}
+
+// ===== ADMIN =====
+function adminTab(tab) {
+  document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.admin-content').forEach(c => c.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('admin-' + tab).classList.add('active');
+
+  if (tab === 'corridas') carregarCorridasAdmin();
+  if (tab === 'motoristas') carregarMotoristasAdmin();
+  if (tab === 'financeiro') carregarFinanceiro();
+  if (tab === 'config') { atualizarResumoFinanceiro(); preencherConfigAvancado(); }
+}
+
+async function carregarCorridasAdmin() {
+  const el = document.getElementById('listaCorridasAdmin');
+  el.innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div>';
+
+  try {
+    const snap = await db.collection('corridas')
+      .orderBy('timestamp', 'desc').limit(30).get();
+
+    if (snap.empty) {
+      el.innerHTML = '<div class="empty-state"><div class="empty-icon">🏁</div>Nenhuma corrida ainda</div>';
+      return;
+    }
+
+    let total = 0; let count = 0;
+    el.innerHTML = '';
+
+    snap.docs.forEach(doc => {
+      const c = doc.data();
+      total += c.valor || 0; count++;
+
+      const statusInfo = {
+        aguardando: { label: 'Aguardando', class: 'badge-amarelo', icon: '⏳' },
+        aceita: { label: 'Aceita', class: 'badge-azul', icon: '🔄' },
+        em_viagem: { label: 'Em viagem', class: 'badge-azul', icon: '🚗' },
+        concluida: { label: 'Concluída', class: 'badge-verde', icon: '✅' },
+        cancelada: { label: 'Cancelada', class: 'badge-vermelho', icon: '❌' }
+      }[c.status] || { label: c.status, class: 'badge-vermelho', icon: '?' };
+
+      el.innerHTML += `
+        <div class="corrida-item">
+          <div class="corrida-rota">
+            <div class="rota-icons">
+              <div class="dot-verde"></div><div class="rota-linha"></div><div class="dot-vermelho"></div>
+            </div>
+            <div class="rota-texto">
+              <div class="rota-origem">${c.origem}</div>
+              <div class="rota-destino">${c.destino}</div>
+            </div>
+          </div>
+          <div class="corrida-footer">
+            <div>
+              <span class="badge ${statusInfo.class}">${statusInfo.icon} ${statusInfo.label}</span>
+              <div class="corrida-dist" style="margin-top:4px">${c.data||''} ${c.hora||''} • ${c.passageiroNome||'?'}</div>
+              ${c.motoristaNome ? `<div class="corrida-dist">🚗 ${c.motoristaNome}</div>` : ''}
+            </div>
+            <div style="text-align:right">
+              <div class="corrida-valor">R$ ${(c.valor||0).toFixed(2).replace('.',',')}</div>
+              <div class="corrida-dist">${c.km||0} km</div>
+              ${c.avaliacao ? `<div class="corrida-dist">⭐ ${c.avaliacao}</div>` : ''}
+            </div>
+          </div>
+        </div>`;
+    });
+
+    document.getElementById('totalCorridas').textContent = count;
+    document.getElementById('faturamento').textContent = `R$${total.toFixed(0)}`;
+    document.getElementById('confFaturamento').textContent = `R$ ${total.toFixed(2).replace('.',',')}`;
+    document.getElementById('confComissao').textContent = `R$ ${(total * config.comissao / 100).toFixed(2).replace('.',',')}`;
+    document.getElementById('confTotal').textContent = count;
+
+  } catch(e) {
+    el.innerHTML = '<div class="empty-state">Erro ao carregar corridas</div>';
+  }
+}
+
+async function carregarMotoristasAdmin() {
+  const el = document.getElementById('listaMotoristaAdmin');
+  el.innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div>';
+
+  try {
+    const snap = await db.collection('motoristas').orderBy('nome').get();
+
+    if (snap.empty) {
+      el.innerHTML = '<div class="empty-state"><div class="empty-icon">🚗</div>Nenhum motorista cadastrado</div>';
+      return;
+    }
+
+    el.innerHTML = '';
+    document.getElementById('totalMotoristas').textContent = snap.size;
+
+    snap.docs.forEach(doc => {
+      const m = doc.data();
+      const iniciais = m.nome.split(' ').map(p=>p[0]).slice(0,2).join('').toUpperCase();
+      el.innerHTML += `
+        <div class="motorista-card-admin">
+          <div class="motorista-avatar" style="width:44px;height:44px;font-size:16px">${iniciais}</div>
+          <div class="motorista-info-admin">
+            <div class="motorista-nome-admin">${m.nome}</div>
+            <div class="motorista-dados">📱 ${m.tel} • ${m.carro||'N/A'} ${m.placa||''}</div>
+            <div style="display:flex;gap:8px;margin-top:4px">
+              <span class="badge ${m.online ? 'badge-verde' : 'badge-vermelho'}" style="font-size:10px">${m.online ? '🟢 Online' : '🔴 Offline'}</span>
+            </div>
+          </div>
+          <button onclick="removerMotorista('${doc.id}')" style="background:none;border:none;color:var(--vermelho);font-size:18px;cursor:pointer;padding:4px">🗑</button>
+        </div>`;
+    });
+  } catch(e) {
+    el.innerHTML = '<div class="empty-state">Erro ao carregar motoristas</div>';
+  }
+}
+
+async function cadastrarMotorista() {
+  const nome = document.getElementById('cadNome').value.trim();
+  const tel = document.getElementById('cadTel').value.trim();
+  const cpf = document.getElementById('cadCpf').value.trim();
+  const carro = document.getElementById('cadCarro').value.trim();
+  const placa = document.getElementById('cadPlaca').value.trim();
+  const cor = document.getElementById('cadCor').value.trim();
+
+  if (!nome || !tel || !carro || !placa) {
+    showToast('Preencha nome, telefone, carro e placa');
+    return;
+  }
+
+  try {
+    const tipoVeiculo = document.getElementById('cadTipoVeiculo')?.value || 'carro';
+    await db.collection('motoristas').add({
+      nome, tel, cpf, carro: `${carro} ${cor}`.trim(), placa,
+      tipoVeiculo, cor,
+      fazCorrida: document.getElementById('cad-faz-corrida')?.checked || true,
+      fazDelivery: document.getElementById('cad-faz-delivery')?.checked || false,
+      fazCarreto: document.getElementById('cad-faz-carreto')?.checked || false,
+      fazMudanca: document.getElementById('cad-faz-mudanca')?.checked || false,
+      fazVan: document.getElementById('cad-faz-van')?.checked || false,
+      temAjudante: document.getElementById('cad-tem-ajudante')?.checked || false,
+      online: false, ativo: true,
+      cadastradoEm: firebase.firestore.FieldValue.serverTimestamp(),
+      corridas: 0, avaliacao: 5.0
+    });
+
+    showToast(`${nome} cadastrado com sucesso! ✅`);
+    ['cadNome','cadTel','cadCpf','cadCarro','cadPlaca','cadCor'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+  } catch(e) {
+    showToast('Erro ao cadastrar motorista');
+    console.error(e);
+  }
+}
+
+async function removerMotorista(id) {
+  if (!confirm('Remover este motorista?')) return;
+  try {
+    await db.collection('motoristas').doc(id).delete();
+    showToast('Motorista removido');
+    carregarMotoristasAdmin();
+  } catch(e) { showToast('Erro'); }
+}
+
+async function carregarDadosAdmin() {
+  carregarCorridasAdmin();
+  carregarMotoristasAdmin();
+}
+
+function atualizarResumoFinanceiro() {
+  document.getElementById('configMinima').value = config.minima;
+  document.getElementById('configKm').value = config.porKm;
+  document.getElementById('configComissao').value = config.comissao;
+  const r = document.getElementById('configRural');
+  const c = document.getElementById('configChuva');
+  if (r) r.value = config.taxaRural || 30;
+  if (c) c.value = config.taxaChuva || 20;
+  const n = document.getElementById('configNoite');
+  const m = document.getElementById('configMadrugada');
+  if (n) n.value = config.taxaNoite || 15;
+  if (m) m.value = config.taxaMadrugada || 30;
+}
+
+function preencherConfigAvancado() {
+  const m = {'cfg-km-carro':'kmCarro','cfg-km-moto':'kmMoto','cfg-km-van':'kmVan','cfg-km-caminhonete':'kmCaminhonete','cfg-km-caminhao':'kmCaminhao','cfg-min-carro':'minCarro','cfg-min-moto':'minMoto','cfg-min-van':'minVan','cfg-min-caminhonete':'minCaminhonete','cfg-min-caminhao':'minCaminhao','cfg-com-orc':'comOrc','cfg-aj1':'aj1','cfg-aj2':'aj2'};
+  Object.entries(m).forEach(([id,k]) => { const el=document.getElementById(id); if(el&&config[k]!==undefined) el.value=config[k]; });
+}
+
+async function salvarConfig() {
+  config.comissao = parseFloat(document.getElementById('configComissao').value) || 15;
+  config.taxaRural = parseFloat(document.getElementById('configRural').value) || 30;
+  config.taxaChuva = parseFloat(document.getElementById('configChuva').value) || 20;
+  config.taxaNoite = parseFloat(document.getElementById('configNoite').value) || 15;
+  config.taxaMadrugada = parseFloat(document.getElementById('configMadrugada').value) || 30;
+  config.senhaAdmin = document.getElementById('configSenhaAdmin').value || 'admin123';
+  // Novos campos por veículo
+  const m = {'cfg-km-carro':'kmCarro','cfg-km-moto':'kmMoto','cfg-km-van':'kmVan','cfg-km-caminhonete':'kmCaminhonete','cfg-km-caminhao':'kmCaminhao','cfg-min-carro':'minCarro','cfg-min-moto':'minMoto','cfg-min-van':'minVan','cfg-min-caminhonete':'minCaminhonete','cfg-min-caminhao':'minCaminhao','cfg-com-orc':'comOrc','cfg-aj1':'aj1','cfg-aj2':'aj2'};
+  Object.entries(m).forEach(([id,k]) => { const el=document.getElementById(id); if(el) config[k]=parseFloat(el.value)||0; });
+  // Manter compatibilidade
+  config.minima = config.minCarro;
+  config.porKm = config.kmCarro;
+
+  try {
+    await db.collection('config').doc('tarifas').set(config);
+    showToast('Configurações salvas! ✅');
+  } catch(e) {
+    showToast('Configurações salvas localmente ✅');
+  }
+}
+
+async function carregarConfig() {
+  try {
+    const snap = await db.collection('config').doc('tarifas').get();
+    if (snap.exists) { config = { ...config, ...snap.data() }; }
+  } catch(e) {}
+}
+
+// ===== HISTÓRICO =====
+async function carregarHistorico() {
+  const el = document.getElementById('listaHistorico');
+  el.innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div>';
+
+  try {
+    let query;
+    if (role === 'passageiro') {
+      query = db.collection('corridas').where('passageiroId','==',user.id).where('status','==','concluida');
+    } else if (role === 'motorista') {
+      query = db.collection('corridas').where('motoristaId','==',user.id).where('status','==','concluida');
+    } else {
+      query = db.collection('corridas').where('status','==','concluida');
+    }
+
+    const snap = await query.orderBy('timestamp','desc').limit(20).get();
+
+    if (snap.empty) {
+      el.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div>Nenhuma corrida concluída</div>';
+      return;
+    }
+
+    let total = 0;
+    el.innerHTML = '';
+    snap.docs.forEach(doc => {
+      const c = doc.data();
+      const v = role === 'motorista' ? (c.ganhoMotorista || c.valor) : c.valor;
+      total += v;
+
+      el.innerHTML += `
+        <div class="hist-item">
+          <div class="hist-header">
+            <div>
+              <div style="font-size:13px;font-weight:600">${c.data||'?'} às ${c.hora||'?'}</div>
+              <div class="hist-data">${c.km||0} km • ⭐ ${c.avaliacao||'-'}</div>
+            </div>
+            <div class="hist-valor">R$ ${v.toFixed(2).replace('.',',')}</div>
+          </div>
+          <div class="corrida-rota" style="margin-bottom:0">
+            <div class="rota-icons"><div class="dot-verde"></div><div class="rota-linha"></div><div class="dot-vermelho"></div></div>
+            <div class="rota-texto">
+              <div class="rota-origem" style="font-size:13px">${c.origem}</div>
+              <div class="rota-destino" style="font-size:13px">${c.destino}</div>
+            </div>
+          </div>
+        </div>`;
+    });
+
+    document.getElementById('totalHistorico').textContent = `Total: R$ ${total.toFixed(2).replace('.',',')}`;
+  } catch(e) {
+    el.innerHTML = '<div class="empty-state">Erro ao carregar histórico</div>';
+  }
+}
+
+// ===== NAV =====
+function setupNav() {
+  const nav = document.getElementById('bottomNav');
+
+  if (role === 'passageiro') {
+    nav.innerHTML = `
+      <button class="nav-item active" id="nav-passageiro" onclick="showPage('passageiro')">
+        <span class="nav-icon">🚗</span>Corrida
+      </button>
+      <button class="nav-item" id="nav-historico" onclick="showPage('historico')">
+        <span class="nav-icon">📋</span>Histórico
+      </button>`;
+  } else if (role === 'motorista') {
+    nav.innerHTML = `
+      <button class="nav-item active" id="nav-motorista" onclick="showPage('motorista')">
+        <span class="nav-icon">🚗</span>Corridas
+      </button>
+      <button class="nav-item" id="nav-historico" onclick="showPage('historico')">
+        <span class="nav-icon">📋</span>Histórico
+      </button>`;
+  } else {
+    // Admin sem bottom nav — usa só as abas dentro da página
+    nav.style.display = 'none';
+  }
+}
+
+function showPage(p) {
+  document.querySelectorAll('.page').forEach(pg => pg.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+  const pageEl = document.getElementById('page-' + p);
+  if (pageEl) pageEl.classList.add('active');
+
+  const navEl = document.getElementById('nav-' + p);
+  if (navEl) navEl.classList.add('active');
+
+  // Esconde o mapa quando é admin
+  const mapaEl = document.getElementById('map');
+  if (mapaEl) mapaEl.style.display = (p === 'passageiro' || p === 'motorista') ? 'block' : 'none';
+
+  if (p === 'historico') carregarHistorico();
+  if (p === 'motorista') { initMapa(); atualizarStatsMotorista(); atualizarBadgesCondicoes(); }
+  if (p === 'passageiro') { initMapa(); carregarCondicoesPlataforma(); mostrarFavoritos(); }
+  if (p === 'admin') carregarDadosAdmin();
+}
+
+
+// ===== PWA INSTALL =====
+let installEvent = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); installEvent = e;
+  setTimeout(() => { document.getElementById('installBanner').style.display = 'block'; }, 4000);
+});
+function instalarApp() {
+  if (installEvent) { installEvent.prompt(); installEvent.userChoice.then(() => { installEvent = null; document.getElementById('installBanner').style.display = 'none'; }); }
+}
+
+// ===== SERVIÇOS =====
+let servicoAtual = 'corrida';
+let qtdAjudante = 0;
+
+function selecionarServico(srv) {
+  servicoAtual = srv;
+  document.querySelectorAll('.servico-btn').forEach(b => b.classList.remove('ativo'));
+  document.getElementById('srv-' + srv).classList.add('ativo');
+  ['form-corrida','form-delivery','form-orcamento'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.style.display = 'none';
+  });
+  if (srv === 'corrida') {
+    document.getElementById('form-corrida').style.display = 'block';
+  } else if (srv === 'delivery') {
+    document.getElementById('form-delivery').style.display = 'block';
+    setTimeout(() => { setupAutocomplete('deliveryOrigem', 'ac-delivery-origem'); setupAutocomplete('deliveryDestino', 'ac-delivery-destino'); }, 100);
+  } else {
+    document.getElementById('form-orcamento').style.display = 'block';
+    setTimeout(() => { setupAutocomplete('orcOrigem', 'ac-orc-origem'); setupAutocomplete('orcDestino', 'ac-orc-destino'); }, 100);
+    const titulos = { carreto:'📦 SOLICITAR CARRETO', mudanca:'🚛 SOLICITAR MUDANÇA', van:'🚐 VAN / EXCURSÃO', caminhonete:'🛻 CAMINHONETE' };
+    document.getElementById('orc-titulo').textContent = titulos[srv] || '📦 ORÇAMENTO';
+    document.getElementById('orc-ajudantes').style.display = srv === 'mudanca' ? 'block' : 'none';
+    if (srv === 'mudanca') {
+      document.getElementById('aj1-label').textContent = `+R$${config.aj1||50}`;
+      document.getElementById('aj2-label').textContent = `+R$${config.aj2||90}`;
+    }
+  }
+}
+
+function selAjudante(n) {
+  qtdAjudante = n;
+  [0,1,2].forEach(i => {
+    document.getElementById('aj-btn-'+i).className = 'ajudante-btn' + (i===n ? ' ativo' : '');
+  });
+}
+
+// ===== DELIVERY =====
+async function solicitarDelivery() {
+  const estab = document.getElementById('deliveryEstab').value.trim();
+  const pedido = document.getElementById('deliveryPedido').value.trim();
+  const orig = document.getElementById('deliveryOrigem').value.trim();
+  const dest = document.getElementById('deliveryDestino').value.trim();
+  if (!estab || !pedido || !orig || !dest) { showToast('Preencha todos os campos'); return; }
+  try {
+    await db.collection('corridas').add({
+      passageiroId: user.id, passageiroNome: user.nome, passageiroTel: user.tel,
+      tipo: 'delivery', estabelecimento: estab, pedido, origem: orig, destino: dest,
+      valor: 0, km: 0, status: 'aguardando',
+      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+      data: new Date().toLocaleDateString('pt-BR'),
+      hora: new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})
+    });
+    showToast('Motoboy solicitado! Aguardando... 🛵');
+    document.getElementById('form-delivery').style.display = 'none';
+    document.getElementById('estado-aguardando').style.display = 'block';
+    document.getElementById('wa-valor').textContent = 'A combinar';
+    document.getElementById('wa-rota').textContent = `${estab} → ${dest}`;
+  } catch(e) { showToast('Erro ao solicitar'); }
+}
+
+// ===== ORÇAMENTO =====
+async function buscarMotoristasOrc() {
+  const tipoSrv = servicoAtual;
+  try {
+    const snap = await db.collection('motoristas').get();
+    const lista = document.getElementById('lista-motoristas-orc');
+    const mots = snap.docs.filter(d => {
+      const m = d.data();
+      if (tipoSrv === 'carreto') return m.fazCarreto;
+      if (tipoSrv === 'mudanca') return m.fazMudanca;
+      if (tipoSrv === 'van') return m.fazVan;
+      if (tipoSrv === 'caminhonete') return m.fazCaminhonete || m.tipoVeiculo === 'caminhonete';
+      return true;
+    });
+    if (!mots.length) { showToast('Nenhum motorista disponível para este serviço'); return; }
+
+    lista.innerHTML = mots.map(doc => {
+      const m = doc.data();
+      const ajTxt = qtdAjudante > 0 ? `
+Ajudantes: ${qtdAjudante}` : '';
+      const waTxt = encodeURIComponent(`Olá ${m.nome}! Vi você no Tô Indo e gostaria de orçamento para ${tipoSrv}.
+
+De: ${document.getElementById('orcOrigem').value||'?'}
+Para: ${document.getElementById('orcDestino').value||'?'}
+Descrição: ${document.getElementById('orcDescricao').value||'?'}
+Data: ${document.getElementById('orcData').value||'?'}${ajTxt}`);
+      const tel = (m.tel||'').replace(/\D/g,'');
+      const veicIcon = {carro:'🚗',moto:'🛵',van:'🚐',caminhonete:'🛻',caminhao:'🚛'}[m.tipoVeiculo]||'🚗';
+      return `<div class="motorista-card-admin">
+        <div class="motorista-avatar">${m.nome.charAt(0)}</div>
+        <div class="motorista-info-admin">
+          <div class="motorista-nome-admin">${m.nome}</div>
+          <div class="motorista-dados">${veicIcon} ${m.carro||'-'} • ${m.placa||''}</div>
+          ${m.temAjudante ? '<div style="font-size:11px;color:var(--verde);margin-top:3px">👥 Tem ajudante disponível</div>' : ''}
+        </div>
+        <a href="https://wa.me/55${tel}?text=${waTxt}" target="_blank" style="background:#25D366;border:none;border-radius:10px;padding:8px 12px;color:#fff;font-size:13px;font-weight:700;text-decoration:none;display:flex;align-items:center;gap:4px;flex-shrink:0">💬 Contato</a>
+      </div>`;
+    }).join('');
+
+    document.getElementById('motoristas-orc-lista').style.display = 'block';
+
+    // Registra solicitação
+    await db.collection('orcamentos').add({
+      clienteId: user.id, clienteNome: user.nome, clienteTel: user.tel,
+      tipo: tipoSrv, origem: document.getElementById('orcOrigem').value,
+      destino: document.getElementById('orcDestino').value,
+      descricao: document.getElementById('orcDescricao').value,
+      data: document.getElementById('orcData').value,
+      ajudantes: qtdAjudante,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+      status: 'aberto'
+    }).catch(() => {});
+    showToast('Motoristas encontrados! Toque em Contato 📱');
+  } catch(e) { showToast('Erro ao buscar motoristas'); }
+}
+
+// ===== REGISTRAR SERVIÇO MOTORISTA =====
+async function registrarServico() {
+  const tipo = document.getElementById('reg-tipo').value;
+  const cliente = document.getElementById('reg-cliente').value.trim();
+  const valor = parseFloat(document.getElementById('reg-valor').value) || 0;
+  const desc = document.getElementById('reg-descricao').value.trim();
+  if (!cliente || !valor) { showToast('Preencha cliente e valor'); return; }
+  const comissao = valor * ((config.comOrc || 10) / 100);
+  const ganho = valor - comissao;
+  try {
+    await db.collection('servicos').add({
+      motoristaId: user.id, motoristaNome: user.nome,
+      tipo, cliente, valor, desc,
+      comissaoPlataforma: parseFloat(comissao.toFixed(2)),
+      ganhoMotorista: parseFloat(ganho.toFixed(2)),
+      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+      data: new Date().toLocaleDateString('pt-BR'),
+      hora: new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})
+    });
+    showToast(`Registrado! Comissão: R$ ${comissao.toFixed(2).replace('.',',')} 📋`);
+    document.getElementById('reg-cliente').value = '';
+    document.getElementById('reg-valor').value = '';
+    document.getElementById('reg-descricao').value = '';
+  } catch(e) { showToast('Erro ao registrar'); }
+}
+
+// ===== FAVORITOS =====
+function salvarFavorito() {
+  const dest = document.getElementById('destino').value.trim();
+  if (!dest) { showToast('Digite um destino primeiro'); return; }
+  let favs = JSON.parse(localStorage.getItem('toindo_favs') || '[]');
+  if (!favs.includes(dest)) { favs.unshift(dest); if(favs.length > 5) favs = favs.slice(0,5); localStorage.setItem('toindo_favs', JSON.stringify(favs)); showToast('⭐ Favorito salvo!'); mostrarFavoritos(); }
+  else showToast('Já está nos favoritos');
+}
+function mostrarFavoritos() {
+  const favs = JSON.parse(localStorage.getItem('toindo_favs') || '[]');
+  if (!favs.length) return;
+  document.getElementById('favs-box').style.display = 'block';
+  document.getElementById('favs-lista').innerHTML = favs.map(f =>
+    `<button class="fav-tag" onclick="document.getElementById('destino').value='${f.replace(/'/g,"\'")}'"">⭐ ${f.length>20?f.substring(0,20)+'...':f}</button>`
+  ).join('');
+}
+
+// ===== FINANCEIRO ADMIN =====
+async function carregarFinanceiro() {
+  try {
+    const [corridas, servicos, motoristas] = await Promise.all([
+      db.collection('corridas').where('status','==','concluida').get(),
+      db.collection('servicos').get(),
+      db.collection('motoristas').get()
+    ]);
+    let fatC=0, comC=0;
+    corridas.forEach(d => { const c=d.data(); fatC+=c.valor||0; comC+=c.comissaoPlataforma||0; });
+    let fatS=0, comS=0;
+    servicos.forEach(d => { const s=d.data(); fatS+=s.valor||0; comS+=s.comissaoPlataforma||0; });
+    const mOnline = motoristas.docs.filter(d => d.data().online).length;
+    document.getElementById('fin-faturamento').textContent = `R$ ${(fatC+fatS).toFixed(2).replace('.',',')}`;
+    document.getElementById('fin-comissao').textContent = `R$ ${(comC+comS).toFixed(2).replace('.',',')}`;
+    document.getElementById('fin-corridas').textContent = corridas.size;
+    document.getElementById('fin-servicos').textContent = servicos.size;
+    document.getElementById('fin-online').textContent = mOnline;
+    // Detalhe
+    const el = document.getElementById('lista-fin-detalhe');
+    const todos = [...corridas.docs.map(d=>({...d.data(),_t:'corrida'})), ...servicos.docs.map(d=>({...d.data(),_t:'servico'}))].sort((a,b)=>(b.timestamp?.seconds||0)-(a.timestamp?.seconds||0)).slice(0,20);
+    el.innerHTML = todos.map(c => `<div class="corrida-item">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><div style="font-weight:600;font-size:14px">${c._t==='corrida'?'🚗 Corrida':'💼 '+c.tipo}</div>
+        <div style="font-size:11px;color:var(--texto-muted)">${c.data||''} ${c.hora||''} • ${c.motoristaNome||c.clienteNome||'-'}</div></div>
+        <div style="text-align:right"><div class="corrida-valor">R$ ${(c.valor||0).toFixed(2).replace('.',',')}</div>
+        <div style="font-size:11px;color:var(--verde)">Com: R$ ${(c.comissaoPlataforma||0).toFixed(2).replace('.',',')}</div></div>
+      </div>
+    </div>`).join('');
+  } catch(e) { showToast('Erro ao carregar financeiro'); }
+}
+
+// ===== GPS MOTORISTA (envia localização) =====
+function enviarGPSMotorista() {
+  if (!navigator.geolocation || !db || !user) return;
+  navigator.geolocation.getCurrentPosition(pos => {
+    db.collection('motoristas').doc(user.id).update({ lat: pos.coords.latitude, lon: pos.coords.longitude, gpsAt: firebase.firestore.FieldValue.serverTimestamp() }).catch(() => {});
+  });
+}
+
+
+// ===== NOTIFICAÇÕES PUSH (FCM) =====
+const VAPID_KEY = 'BHgskxWgb7aEMLIBzzTD6AOpMflfAGHReBOsu-UD5FHrlsgD0hQxvbF-mX48Pdf8Jp7BbI_oS7G2bRJ1evCEHk0';
+let messaging = null;
+
+async function initFCM() {
+  try {
+    messaging = firebase.messaging();
+    // Pede permissão de notificação
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
+      console.log('Permissão de notificação negada');
+      return;
+    }
+    // Pega o token do dispositivo
+    const token = await messaging.getToken({ vapidKey: VAPID_KEY });
+    if (token && db && user) {
+      // Salva o token no Firestore do motorista
+      await db.collection('motoristas').doc(user.id).update({
+        fcmToken: token,
+        tokenAt: firebase.firestore.FieldValue.serverTimestamp()
+      }).catch(() => {});
+      console.log('FCM token salvo:', token.substring(0,20)+'...');
+    }
+    // Escuta mensagens em primeiro plano
+    messaging.onMessage(payload => {
+      const { title, body } = payload.notification || {};
+      tocarSom();
+      // Mostra notificação visual no app
+      if (title) showToast(`🔔 ${title}: ${body||''}`);
+      // Atualiza alerta de corrida
+      if (payload.data && payload.data.corridaId) {
+        alertaCorridaId = null; // força recarregar
+      }
+    });
+  } catch(e) {
+    console.log('FCM erro:', e.message);
+  }
+}
+
+// Registra service worker para notificações em background
+async function registrarServiceWorker() {
+  if (!('serviceWorker' in navigator)) return;
+  try {
+    const reg = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+    console.log('Service Worker registrado');
+    return reg;
+  } catch(e) {
+    // Tenta criar SW inline se não tiver arquivo
+    const swContent = `
+importScripts('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js');
+firebase.initializeApp({
+  apiKey: "AIzaSyDqC0bDjdK2EkAJCIidEYrU0",
+  authDomain: "barbearia-juninho-e-mirinho.firebaseapp.com",
+  projectId: "barbearia-juninho-e-mirinho",
+  storageBucket: "barbearia-juninho-e-mirinho.appspot.com",
+  messagingSenderId: "942836608130",
+  appId: "1:942836608130:web:1e6bca4780f314b88d189b"
+});
+const messaging = firebase.messaging();
+messaging.onBackgroundMessage(payload => {
+  const { title, body } = payload.notification || {};
+  self.registration.showNotification(title || 'Tô Indo', {
+    body: body || 'Nova corrida disponível!',
+    icon: '/icon-192.png',
+    badge: '/icon-192.png',
+    vibrate: [200, 100, 200],
+    data: payload.data
+  });
+});`;
+    console.log('SW não pôde ser registrado:', e.message);
+  }
+}
+
+function tocarSom() {
+  try {
+    const ctx = new AudioContext();
+    [0, 0.2, 0.4].forEach(t => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value = 1000;
+      g.gain.setValueAtTime(0.4, ctx.currentTime + t);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.2);
+      o.start(ctx.currentTime + t); o.stop(ctx.currentTime + t + 0.25);
+    });
+  } catch(e) {}
+}
+
+// ===== TOAST =====
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ===== CADASTRO RÁPIDO =====
+function mostrarCadastro() {
+  if (roleAtual === 'admin') return;
+  showToast('Entre com seu nome e telefone para se registrar automaticamente!');
+}
+</script>
+</body>
+</html>
