@@ -1,0 +1,1540 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>🎯 MegaGrupo Quina</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<style>
+:root {
+  --bg:#050a12; --bg2:#0a1520; --card:#0d1a2a; --card2:#102030;
+  --green:#00aaff; --gd:#0077cc; --gg:rgba(0,170,255,.2);
+  --gold:#00aaff; --go:#00aaff; --gog:rgba(0,170,255,.18);
+  --pu:#00aaff; --pud:#0077cc;
+  --bl:#00aaff; --bld:#0077cc;
+  --red:#00aaff;
+  --bo:rgba(255,255,255,.07); --bo2:rgba(255,255,255,.12);
+  --tx:#f0f0f0; --mu:#666666; --mu2:#999999;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--tx);font-family:'Inter',sans-serif;overflow-x:hidden}
+
+/* LOADING */
+#loading{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+#loading.hide{display:none}
+.spin{width:44px;height:44px;border:3px solid var(--bo2);border-top-color:var(--green);border-radius:50%;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* SCREENS */
+.scr{display:none;min-height:100vh;flex-direction:column;animation:fi .2s ease}
+.scr.on{display:flex}
+@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* HEADER */
+.hdr{min-height:56px;padding:0 15px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:60;backdrop-filter:blur(14px)}
+.hg{background:linear-gradient(135deg,rgba(0,80,160,.95),rgba(0,40,100,.95));border-bottom:1px solid rgba(0,170,255,.3)}
+.hp{background:linear-gradient(135deg,rgba(0,80,160,.95),rgba(0,40,100,.95));border-bottom:1px solid rgba(0,170,255,.3)}
+.ht{font-family:'Bebas Neue';font-size:20px;letter-spacing:1.5px;line-height:1}
+.hs{font-size:11px;opacity:.6;margin-top:1px}
+.ib{background:rgba(255,255,255,.1);border:none;color:#fff;width:34px;height:34px;border-radius:50%;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.14s}
+.ib:active{background:rgba(255,255,255,.22)}
+
+/* BODY */
+.bd{flex:1;padding:14px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;padding-bottom:28px}
+
+/* BUTTONS */
+.btn{display:flex;align-items:center;justify-content:center;gap:7px;padding:16px 18px;border-radius:13px;border:none;font-family:'Inter';font-weight:700;font-size:15px;cursor:pointer;transition:all .14s;width:100%;min-height:52px;touch-action:manipulation}
+.btn:active{transform:scale(.96)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.bg2{background:linear-gradient(135deg,#00aaff,#0077cc);color:#000;box-shadow:0 4px 16px var(--gg)}
+.bp2{background:linear-gradient(135deg,#00aaff,#0055aa);color:#fff;box-shadow:0 4px 16px rgba(0,170,255,.3)}
+.bgh{background:var(--card2);color:var(--tx);border:1px solid var(--bo2)}
+.bb2{background:linear-gradient(135deg,var(--bl),var(--bld));color:#fff}
+.brd{background:linear-gradient(135deg,var(--red),#c0392b);color:#fff}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--bo);border-radius:14px;padding:14px}
+.cg{background:linear-gradient(135deg,rgba(0,60,140,.5),rgba(0,30,80,.3));border:1px solid rgba(0,170,255,.2);border-radius:14px;padding:14px}
+.cgold{background:linear-gradient(135deg,rgba(0,50,120,.5),rgba(0,25,70,.3));border:1px solid rgba(255,102,0,.2);border-radius:14px;padding:14px}
+
+/* FORM */
+.fg{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
+.fg label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--mu2)}
+.fg input,.fg select,.fg textarea{background:var(--card2);border:1px solid var(--bo2);border-radius:10px;padding:13px 14px;color:var(--tx);font-family:'Inter';font-size:16px;outline:none;transition:.14s;width:100%;min-height:50px;touch-action:manipulation}
+.fg input:focus,.fg select:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(0,170,255,.1)}
+
+/* TOAST */
+#toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:#1e2e1e;border:1px solid var(--bo2);border-radius:12px;padding:11px 18px;font-size:13px;font-weight:600;z-index:9999;opacity:0;transition:all .25s;white-space:nowrap;max-width:90vw;text-align:center}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.te{background:#2e1e1e;border-color:rgba(0,170,255,.3);color:#ff6b7a}
+#toast.tgd{background:#1e2e1e;border-color:rgba(0,170,255,.3);color:var(--green)}
+
+/* HOME */
+.home-logo{font-family:'Bebas Neue';font-size:72px;letter-spacing:4px;line-height:1;background:linear-gradient(135deg,var(--green),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.home-sub{font-size:14px;color:var(--mu2);text-align:center;line-height:1.5;margin:8px 0 20px}
+.home-btns{display:flex;flex-direction:column;gap:10px;width:100%}
+.balls-row{display:flex;gap:8px;justify-content:center;margin-bottom:8px}
+.ball-demo{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,rgba(0,170,255,.2),rgba(180,0,0,.1));border:2px solid rgba(0,170,255,.3);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:16px;color:var(--green)}
+
+/* GRUPOS */
+.gcard{background:var(--card);border:1.5px solid var(--bo);border-radius:14px;padding:13px;cursor:pointer;transition:.14s;position:relative;overflow:hidden}
+.gcard::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--green),var(--gold))}
+.gcard:active{transform:scale(.98)}
+.pgbar{height:4px;background:var(--bo2);border-radius:2px;overflow:hidden}
+.pgfill{height:100%;background:linear-gradient(90deg,var(--green),var(--gold));border-radius:2px;transition:.4s}
+
+/* NÚMEROS */
+.n-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:7px}
+.nball{aspect-ratio:1;border-radius:10px;background:var(--card2);border:1.5px solid var(--bo2);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:17px;color:var(--mu2);cursor:pointer;transition:.12s;user-select:none;touch-action:manipulation;-webkit-tap-highlight-color:rgba(0,170,255,.3)}
+.nball:active{transform:scale(.88);background:rgba(0,170,255,.3)}
+.nball.sel{background:linear-gradient(135deg,#00aaff,#0055aa);border-color:#00aaff;color:#fff;box-shadow:0 2px 10px rgba(0,170,255,.5)}
+.nball.hit{background:linear-gradient(135deg,#00aaff,#0055aa);border-color:#00aaff;color:#fff;box-shadow:0 2px 10px rgba(0,170,255,.5)}
+.snb{width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,#00aaff,#0055aa);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:16px;color:#fff}
+.sel-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;min-height:40px}
+
+/* PIX */
+.pk{font-family:'Bebas Neue';font-size:22px;color:var(--green);letter-spacing:1px;background:var(--bg2);border-radius:10px;padding:12px;text-align:center;cursor:pointer;border:1px dashed rgba(0,170,255,.4)}
+.pv{font-family:'Bebas Neue';font-size:42px;color:var(--green);line-height:1}
+.ps{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;font-size:13px}
+.psn{width:22px;height:22px;border-radius:50%;background:var(--green);color:#000;font-weight:800;font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+
+/* MEU JOGO */
+.conf-nums{display:flex;gap:6px;flex-wrap:wrap}
+.cnb{width:38px;height:38px;border-radius:9px;background:linear-gradient(135deg,#00aaff,#0055aa);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:17px;color:#fff}
+
+/* RANKING */
+.rk-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--card);border-radius:12px;border:1px solid var(--bo)}
+.rk-pos{font-family:'Bebas Neue';font-size:22px;width:28px;text-align:center;flex-shrink:0}
+.rk-bar{height:5px;border-radius:3px;background:linear-gradient(90deg,var(--green),var(--gold));transition:.4s}
+
+/* BADGES */
+.bdg{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:700}
+.bvd{background:rgba(0,170,255,.12);color:#00aaff;border:1px solid rgba(0,170,255,.3)}
+.bvm{background:rgba(0,170,255,.12);color:#ff4757;border:1px solid rgba(0,170,255,.2)}
+.bvg{background:rgba(255,193,7,.12);color:var(--gold);border:1px solid rgba(255,193,7,.2)}
+
+/* COUNTDOWN */
+.cd-box{background:var(--bg2);border:1px solid var(--bo);border-radius:12px;padding:12px;text-align:center}
+.cd-time{font-family:'Bebas Neue';font-size:36px;color:var(--green);letter-spacing:2px}
+
+/* STITLE */
+.stl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--mu2);margin-bottom:4px}
+
+/* ADMIN */
+.tab-bar{display:flex;overflow-x:auto;gap:4px;padding:10px 14px;background:var(--bg2);border-bottom:1px solid var(--bo);scrollbar-width:none}
+.tab-bar::-webkit-scrollbar{display:none}
+.tab{padding:7px 13px;border-radius:20px;border:none;background:transparent;color:var(--mu2);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;transition:.14s}
+.tab.on{background:var(--card2);color:var(--tx);border:1px solid var(--bo2)}
+.tab-content{display:none}
+.tab-content.on{display:flex;flex-direction:column;gap:12px}
+.r2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.adm-stat{background:var(--card);border:1px solid var(--bo);border-radius:12px;padding:12px;text-align:center}
+.adm-stat-v{font-family:'Bebas Neue';font-size:28px;color:var(--green)}
+.adm-stat-l{font-size:11px;color:var(--mu2);margin-top:2px}
+
+/* MODAL */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:800;align-items:flex-end;justify-content:center;padding:0}
+.modal.on{display:flex}
+.mbox{background:var(--bg2);border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:480px;max-height:85vh;overflow-y:auto;border:1px solid var(--bo2)}
+.mt{font-family:'Bebas Neue';font-size:20px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="loading">
+  <div style="font-family:'Bebas Neue';font-size:48px;background:linear-gradient(135deg,var(--green),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent">MEGAGRUPO</div>
+  <div class="spin"></div>
+  <div style="font-size:12px;color:var(--mu2)">Conectando...</div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- HOME -->
+<div class="scr" id="s-home">
+  <div class="hdr hg">
+    <div style="width:34px"></div>
+    <div class="ht" style="font-size:24px;background:linear-gradient(135deg,var(--green),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent">🎯 MEGAGRUPO QUINA</div>
+    <div style="width:34px"></div>
+  </div>
+  <div class="bd" style="align-items:center;justify-content:center;text-align:center">
+    <div class="balls-row">
+      <div class="ball-demo">07</div>
+      <div class="ball-demo">14</div>
+      <div class="ball-demo">28</div>
+      <div class="ball-demo">45</div>
+      <div class="ball-demo">59</div>
+    </div>
+    <div class="home-logo">MEGA<br>GRUPO</div>
+    <p class="home-sub">Escolha seus números, torça em cada sorteio e dispute o prêmio! Sorteio todo dia — Segunda a Sábado!</p>
+    <div class="home-btns">
+      <button class="btn bg2" onclick="go('s-cad')">🎯 Quero Jogar</button>
+      <button class="btn bb2" onclick="go('s-rank')">🏆 Ver Classificação</button>
+      <button class="btn bgh" style="margin-top:3px" onclick="go('s-alog')">🔐 Administrador</button>
+    </div>
+  </div>
+</div>
+
+<!-- CADASTRO -->
+<div class="scr" id="s-cad">
+  <div class="hdr hp">
+    <button class="ib" onclick="go('s-home')">←</button>
+    <div><div class="ht">👤 CADASTRO</div><div class="hs">Passo 1 de 3</div></div>
+    <div style="width:34px"></div>
+  </div>
+  <div class="bd">
+    <div class="card">
+      <div class="fg"><label>Nome completo *</label><input id="c-nome" type="text" placeholder="Seu nome completo"></div>
+      <div class="fg"><label>📱 WhatsApp * (com DDD)</label><input id="c-tel" type="tel" placeholder="31999999999"></div>
+      <div class="fg" style="margin-bottom:0"><label>📧 E-mail (opcional)</label><input id="c-email" type="email" placeholder="seu@email.com"></div>
+    </div>
+    <div class="cgold">
+      <div style="font-size:13px;font-weight:800;margin-bottom:9px">✨ Como funciona:</div>
+      <div style="display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--mu2)">
+        <div>💰 <b style="color:var(--green)">Escolha o grupo</b> com o valor que preferir!</div>
+        <div>🗂 Sorteio <b style="color:var(--gold)">Todo dia — Segunda a Sábado!</b></div>
+        <div>🎲 Escolha seus números (1–80) <b style="color:var(--gold)">UMA VEZ!</b></div>
+        <div>⭐ Seus números valem <b style="color:var(--green)">o campeonato inteiro</b></div>
+        <div>🏅 Primeiro a atingir a meta de pontos ganha!</div>
+        <div>📅 Sorteios: Segunda a Sábado</div>
+      </div>
+    </div>
+    <!-- Seleção de grupo -->
+    <div id="gsel-wrap" style="display:none">
+      <div class="stl">Escolha seu grupo</div>
+      <div id="gsel-list" style="display:flex;flex-direction:column;gap:8px"></div>
+    </div>
+    <!-- Aviso de atraso -->
+    <div id="atraso-aviso" style="display:none" class="cgold">
+      <div style="font-size:13px;font-weight:800;margin-bottom:5px">⚠️ Atenção!</div>
+      <div id="atraso-txt" style="font-size:12px;color:var(--mu2);line-height:1.6"></div>
+    </div>
+    <button class="btn bp2" id="btn-cad" onclick="doCad()">→ Próximo: Escolher Números</button>
+  </div>
+</div>
+
+<!-- NÚMEROS -->
+<div class="scr" id="s-nums">
+  <div class="hdr hp">
+    <button class="ib" onclick="go('s-cad')">←</button>
+    <div><div class="ht">🎲 ESCOLHA 6 NÚMEROS</div><div class="hs">Passo 2 de 3</div></div>
+    <div style="width:34px"></div>
+  </div>
+  <div class="bd">
+    <div class="n-grid" id="n-grid"></div>
+    <div class="card">
+      <div class="stl">Seus números: <span id="n-ct" style="color:var(--green)">0/6</span> <span id="n-qtd-label" style="color:var(--mu2);font-size:10px"></span></div>
+      <div class="sel-row" id="n-sel"></div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn bgh" style="flex:0 0 auto;padding:14px 16px" onclick="clearNums()">✕ Limpar</button>
+      <button class="btn bp2" id="btn-nums" onclick="salvarAposta()">→ Próximo: Pagamento</button>
+    </div>
+  </div>
+</div>
+
+<!-- PIX -->
+<div class="scr" id="s-pix">
+  <div class="hdr hg">
+    <button class="ib" onclick="go('s-nums')">←</button>
+    <div><div class="ht">💳 PAGAMENTO</div><div class="hs">Passo 3 de 3</div></div>
+    <div style="width:34px"></div>
+  </div>
+  <div class="bd">
+    <div style="background:linear-gradient(135deg,rgba(0,170,255,.15),rgba(180,0,0,.08));border:1px solid rgba(0,170,255,.3);border-radius:15px;padding:18px;text-align:center">
+      <div style="font-size:36px;margin-bottom:8px">🍀</div>
+      <div style="font-family:'Bebas Neue';font-size:22px;color:var(--green);margin-bottom:6px">Parabéns! Números salvos!</div>
+      <div style="font-size:13px;color:var(--mu2);margin-bottom:10px">Agora faça o PIX e envie o comprovante para ser ativado!</div>
+      <div style="font-size:12px;color:var(--mu2)">Valor da semana</div>
+      <div class="pv" id="pix-val">R$ —</div>
+    </div>
+    <div class="card">
+      <div class="stl" style="margin-bottom:8px">🔑 Chave PIX</div>
+      <div class="pk" id="pix-key" onclick="copiarPix()">—</div>
+      <button class="btn bgh" onclick="copiarPix()" style="font-size:12px;padding:9px;margin-top:8px">📋 Toque para copiar a chave PIX</button>
+    </div>
+    <div class="card">
+      <div style="font-weight:800;font-size:13px;margin-bottom:10px">📋 Como pagar:</div>
+      <div class="ps"><div class="psn">1</div><div>Copie a chave PIX acima</div></div>
+      <div class="ps"><div class="psn">2</div><div>Abra seu banco e faça o PIX de <b id="pix-val2" style="color:var(--green)">—</b></div></div>
+      <div class="ps"><div class="psn">3</div><div>Envie o comprovante para o organizador no WhatsApp</div></div>
+      <div class="ps"><div class="psn">4</div><div>Organizador confirma e sua aposta está ativa! ✅</div></div>
+    </div>
+    <button class="btn bg2" onclick="go('s-conf')">✅ Ver meu jogo</button>
+  </div>
+</div>
+
+<!-- MEU JOGO -->
+<div class="scr" id="s-conf">
+  <div class="hdr hp">
+    <button class="ib" onclick="go('s-home')">🏠</button>
+    <div><div class="ht">🏆 MEU JOGO</div><div class="hs" id="conf-sub">—</div></div>
+    <div style="width:34px"></div>
+  </div>
+  <div class="bd">
+    <div class="cg" style="text-align:center">
+      <div style="font-size:12px;color:var(--mu2);margin-bottom:4px">Status</div>
+      <div id="conf-status" style="font-family:'Bebas Neue';font-size:20px;color:var(--green)">—</div>
+    </div>
+    <div class="card">
+      <div class="stl" style="margin-bottom:8px">🎲 Meus números</div>
+      <div class="conf-nums" id="conf-nums"></div>
+    </div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+        <div><div class="stl">Pontuação</div><div style="font-family:'Bebas Neue';font-size:32px;color:var(--green)" id="conf-pts">0 pts</div></div>
+        <div style="text-align:right"><div class="stl">Grupo</div><div style="font-weight:700;font-size:14px;margin-top:4px" id="conf-grupo">—</div></div>
+      </div>
+      <div style="font-size:12px;color:var(--mu2)" id="conf-mlbl">—</div>
+    </div>
+    <div class="cd-box">
+      <div style="font-size:11px;color:var(--mu2);margin-bottom:4px">⏳ Próximo sorteio</div>
+      <div class="cd-time" id="cd-time">--:--:--</div>
+      <div style="font-size:11px;color:var(--mu2);margin-top:3px" id="cd-dia">—</div>
+    </div>
+    <button class="btn bb2" onclick="go('s-rank')">🏆 Ver Classificação</button>
+  </div>
+</div>
+
+<!-- RANKING -->
+<div class="scr" id="s-rank">
+  <div class="hdr hg">
+    <button class="ib" onclick="go('s-home')">←</button>
+    <div><div class="ht">🏆 CLASSIFICAÇÃO</div><div class="hs" id="rk-sub">Campeonato</div></div>
+    <div style="width:34px"></div>
+  </div>
+  <div class="bd">
+    <div id="rk-grp-sel" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px"></div>
+    <div id="rk-premio"></div>
+    <div id="rk-body"></div>
+  </div>
+</div>
+
+<!-- ADMIN LOGIN -->
+<div class="scr" id="s-alog">
+  <div class="hdr hg">
+    <button class="ib" onclick="go('s-home')">←</button>
+    <div><div class="ht">🔐 ADMINISTRADOR</div></div>
+    <div style="width:34px"></div>
+  </div>
+  <div class="bd">
+    <div class="card">
+      <div class="fg"><label>Senha</label><input id="adm-pass" type="password" placeholder="••••" onkeydown="if(event.key==='Enter')admLogin()"></div>
+      <button class="btn bg2" onclick="admLogin()">Entrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN PAINEL -->
+<div class="scr" id="s-adm">
+  <div class="hdr hau" style="background:linear-gradient(135deg,rgba(120,20,20,.95),rgba(80,10,10,.95));border-bottom:1px solid rgba(255,23,68,.18)">
+    <button class="ib" onclick="go('s-home')">🏠</button>
+    <div><div class="ht">⚙️ PAINEL ADMIN</div></div>
+    <div style="width:34px"></div>
+  </div>
+  <div class="tab-bar" id="adm-tabs">
+    <button class="tab on" onclick="admTab('dash')">📊 Dashboard</button>
+    <button class="tab" onclick="admTab('jogs')">👥 Jogadores</button>
+    <button class="tab" onclick="admTab('grps')">🗂 Grupos</button>
+    <button class="tab" onclick="admTab('res')">🎲 Resultado</button>
+    <button class="tab" onclick="admTab('fin')">💰 Financeiro</button>
+    <button class="tab" onclick="admTab('cfg')">⚙️ Config</button>
+    <button class="tab" onclick="admTab('rst')">🔄 Reset</button>
+  </div>
+  <div class="bd">
+    <!-- DASHBOARD -->
+    <div class="tab-content on" id="adm-dash">
+      <div class="r2">
+        <div class="adm-stat"><div class="adm-stat-v" id="d-jogs">0</div><div class="adm-stat-l">Jogadores</div></div>
+        <div class="adm-stat"><div class="adm-stat-v" id="d-grps">0</div><div class="adm-stat-l">Grupos</div></div>
+        <div class="adm-stat"><div class="adm-stat-v" id="d-paid">0</div><div class="adm-stat-l">Pagos</div></div>
+        <div class="adm-stat"><div class="adm-stat-v" id="d-pend">0</div><div class="adm-stat-l">Pendentes</div></div>
+      </div>
+      <div class="cg">
+        <div class="stl" style="margin-bottom:6px">💰 Prêmio estimado</div>
+        <div style="font-family:'Bebas Neue';font-size:36px;color:var(--green)" id="d-premio">R$ 0,00</div>
+        <div style="font-size:11px;color:var(--mu2);margin-top:4px" id="d-semana">Semana 1</div>
+      </div>
+      <div class="card" style="border:1px solid rgba(255,193,7,.3)">
+        <div style="font-weight:800;margin-bottom:8px;color:var(--gold)">🔄 Controle Semanal</div>
+        <div style="font-size:13px;color:var(--mu2);margin-bottom:10px">Inicia nova semana — todos os jogadores voltam para Pendente e você confirma os pagamentos novamente.</div>
+        <button class="btn" style="background:linear-gradient(135deg,#00aaff,#0066cc);color:#fff;font-weight:800" onclick="novaSemanaPag()">🔄 Iniciar Nova Semana de Cobrança</button>
+      </div>
+      <div id="d-alertas"></div>
+    </div>
+
+    <!-- JOGADORES -->
+    <div class="tab-content" id="adm-jogs">
+      <button class="btn bg2" onclick="openModal('m-mj')" style="margin-bottom:10px">+ Cadastrar Jogador</button>
+      <div id="adm-jogs-filtro" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px"></div>
+      <div id="adm-jl"></div>
+    </div>
+
+    <!-- GRUPOS -->
+    <div class="tab-content" id="adm-grps">
+      <button class="btn bg2" onclick="openModal('m-grp')">+ Criar Novo Grupo</button>
+      <div id="adm-gl"></div>
+    </div>
+
+    <!-- RESULTADO -->
+    <div class="tab-content" id="adm-res">
+      <div class="card">
+        <div class="stl" style="margin-bottom:8px">🎲 Lançar Resultado</div>
+        <div class="fg"><label>Números sorteados (separados por vírgula)</label><input id="res-nums" type="text" placeholder="Ex: 05, 12, 23, 34, 45"></div>
+        <div class="fg"><label>Data do sorteio</label><input id="res-data" type="date"></div>
+        <button class="btn bg2" onclick="lancarResultado()">✅ Lançar Resultado</button>
+      </div>
+      <div id="adm-rl"></div>
+    </div>
+
+    <!-- FINANCEIRO -->
+    <div class="tab-content" id="adm-fin">
+      <div id="adm-fl"></div>
+    </div>
+
+    <!-- CONFIG -->
+    <div class="tab-content" id="adm-cfg">
+      <div class="card">
+        <div class="fg"><label>Chave PIX</label><input id="cfg-pix" type="text" placeholder="CPF, celular, e-mail ou chave aleatória"></div>
+        <div class="fg"><label>Nome do Organizador</label><input id="cfg-org" type="text"></div>
+        <div class="fg"><label>📱 WhatsApp do Organizador</label><input id="cfg-wpp" type="tel" placeholder="31999999999"></div>
+        <div class="fg"><label>💰 Valor padrão/semana R$</label><input id="cfg-val" type="number" value="50" min="1"></div>
+        <div class="fg"><label>🎯 Meta de pontos (1–20)</label>
+          <input id="cfg-meta" type="number" value="10" min="1" max="20" placeholder="Ex: 10">
+        </div>
+        <div class="fg"><label>Máx. jogadores/grupo</label><input id="cfg-max" type="number" value="30" min="5"></div>
+        <div class="fg"><label>Alerta (pontos antes da meta)</label><input id="cfg-alerta" type="number" value="2" min="1"></div>
+        <div class="fg"><label>Senha Admin</label><input id="cfg-pass" type="text" value="1234"></div>
+        <button class="btn bg2" onclick="salvarCfg()">💾 Salvar Configurações</button>
+      </div>
+    </div>
+
+    <!-- RESET -->
+    <div class="tab-content" id="adm-rst">
+      <div class="card">
+        <div style="font-weight:800;margin-bottom:12px;color:var(--gold)">⚠️ Zona de Reset</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button class="btn bgh" onclick="resetarPontos()">🔄 Zerar Pontuação</button>
+          <button class="btn bgh" onclick="resetarPagamentos()">💳 Zerar Pagamentos</button>
+          <button class="btn brd" onclick="resetarTudo()">⚠️ Reset Completo</button>
+        </div>
+      </div>
+      <div class="card">
+        <div style="font-weight:800;margin-bottom:12px;color:var(--red)">🏆 Encerrar Campeonato</div>
+        <button class="btn brd" onclick="encerrarCampeonato()">🏆 Encerrar e Registrar Campeão</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Cadastrar Jogador (Admin) -->
+<div class="modal" id="m-mj">
+  <div class="mbox">
+    <div class="mt">👤 Cadastrar Jogador <button class="ib" onclick="closeModal('m-mj')" style="background:var(--card2)">✕</button></div>
+    <div class="fg"><label>Nome</label><input id="mj-n" type="text"></div>
+    <div class="fg"><label>WhatsApp</label><input id="mj-t" type="tel"></div>
+    <div class="fg"><label>Grupo</label><select id="mj-g"></select></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn bg2" onclick="admCadJog()">Cadastrar</button>
+      <button class="btn bgh" onclick="closeModal('m-mj')" style="flex-shrink:0">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Criar Grupo -->
+<div class="modal" id="m-grp">
+  <div class="mbox">
+    <div class="mt">🗂 Criar Grupo <button class="ib" onclick="closeModal('m-grp')" style="background:var(--card2)">✕</button></div>
+    <div class="fg"><label>Nome do Grupo</label><input id="ng-n" type="text" placeholder="Ex: Turma do Trabalho"></div>
+    <div class="fg"><label>💰 Valor/semana R$</label><input id="ng-v" type="number" placeholder="Ex: 30, 50, 100..." min="1"></div>
+    <div class="fg"><label>🎯 Meta de pontos para ganhar (1–20)</label>
+      <input id="ng-meta" type="number" value="10" min="1" max="20" placeholder="Ex: 10">
+    </div>
+    <div class="fg"><label>🎲 Quantidade de números por aposta (1–20)</label>
+      <input id="ng-qtd" type="number" value="6" min="1" max="20" placeholder="Ex: 6">
+    </div>
+    <div class="fg"><label>💳 Tipo de pagamento</label>
+      <select id="ng-tipo">
+        <option value="semanal" selected>🔄 Semanal (paga toda semana)</option>
+        <option value="unico">1️⃣ Único (paga uma vez só)</option>
+      </select>
+    </div>
+    <div class="r2">
+      <div class="fg"><label>Máx. Jogadores</label><input id="ng-m" type="number" value="30" min="5"></div>
+      <div class="fg"><label>Comissão %</label><input id="ng-c" type="number" value="20"></div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn bg2" onclick="criarGrupo()">Criar</button>
+      <button class="btn bgh" onclick="closeModal('m-grp')" style="flex-shrink:0">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── FIREBASE ──────────────────────────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyC-3lRCJm4p3SQvNbhwCIr7Y837SbRCCmY",
+  authDomain: "megagrupo-quina.firebaseapp.com",
+  projectId: "megagrupo-quina",
+  storageBucket: "megagrupo-quina.firebasestorage.app",
+  messagingSenderId: "618066871054",
+  appId: "1:618066871054:web:d4033b61fad5fad5e1cd5f"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// ─── ESTADO ────────────────────────────────────────────────────
+let CACHE = { cfg: {}, grupos: [], jogs: [], apostas: [], res: [], sem: null };
+let EU = null;
+let BOLAS = [];
+let GRUPO_RANK_ID = null; // grupo selecionado no ranking
+let FILTRO_GRUPO_JOGS = null; // filtro de grupo no painel de jogadores
+let cdTimer = null;
+
+// ─── FIREBASE HELPERS ──────────────────────────────────────────
+const fbSet = (col, id, data) => db.collection(col).doc(id).set(data, { merge: true });
+const fbAdd = (col, data) => db.collection(col).add(data).then(r => r.id);
+const fbUpdate = (col, id, data) => db.collection(col).doc(id).update(data);
+const fbDelete = (col, id) => db.collection(col).doc(id).delete();
+
+// ─── TOAST ─────────────────────────────────────────────────────
+let toastTimer;
+function toast(msg, cls='tgd') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'on ' + cls;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.className = '', 3000);
+}
+
+// ─── NAVEGAÇÃO ─────────────────────────────────────────────────
+function go(id) {
+  document.querySelectorAll('.scr').forEach(s => s.classList.remove('on'));
+  const el = document.getElementById(id);
+  if (el) el.classList.add('on');
+  if (id === 's-rank') renderRanking();
+  if (id === 's-conf') montarConf();
+  if (id === 's-adm') renderAdm();
+}
+
+// ─── INIT ──────────────────────────────────────────────────────
+async function init() {
+  try {
+    // Config
+    const cfgDoc = await db.collection('config').doc('main').get();
+    if (!cfgDoc.exists) {
+      const def = { pix: '31995379542', org: 'Batista', wpp: '31995379542', pass: '1234', val: 50, meta: 10, com: 20, max: 30, alerta: 2 };
+      await db.collection('config').doc('main').set(def);
+      CACHE.cfg = def;
+    } else {
+      CACHE.cfg = cfgDoc.data();
+    }
+
+    // Semana
+    const semDoc = await db.collection('config').doc('semana').get();
+    if (!semDoc.exists) {
+      await db.collection('config').doc('semana').set({ num: 1, inicio: Date.now() });
+      CACHE.sem = { num: 1, inicio: Date.now() };
+    } else {
+      CACHE.sem = semDoc.data();
+    }
+
+    // Grupos
+    const grpSnap = await db.collection('grupos').get();
+    if (grpSnap.empty) {
+      const g = { nome: 'Grupo 1 🎯', val: 30, max: 30, com: 20, jogadores: [], criado: Date.now() };
+      const ref = await db.collection('grupos').add(g);
+      CACHE.grupos = [{ id: ref.id, ...g }];
+    } else {
+      CACHE.grupos = grpSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    }
+
+    // Migração automática: para cada grupo sem premioAcumulado próprio
+    // Se só tem 1 grupo, copia do config. Se tem mais de 1, começa do zero.
+    for (const g of CACHE.grupos) {
+      if (g.premioAcumulado === undefined || g.premioAcumulado === null) {
+        if (CACHE.grupos.length === 1 && CACHE.cfg.premioAcumulado) {
+          g.premioAcumulado = CACHE.cfg.premioAcumulado;
+        } else {
+          g.premioAcumulado = 0;
+        }
+        await db.collection('grupos').doc(g.id).update({ premioAcumulado: g.premioAcumulado });
+      }
+    }
+
+    // Jogadores
+    const jogSnap = await db.collection('jogadores').get();
+    CACHE.jogs = jogSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    // Apostas
+    const apoSnap = await db.collection('apostas').get();
+    CACHE.apostas = apoSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    // Resultados
+    const resSnap = await db.collection('resultados').get();
+    CACHE.res = resSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    // Verificar jogador salvo
+    const euId = localStorage.getItem('mg_eu');
+    if (euId) EU = CACHE.jogs.find(j => j.id === euId) || null;
+
+    document.getElementById('loading').classList.add('hide');
+    go('s-home');
+    iniciarCountdown();
+  } catch(e) {
+    console.error('Init error:', e);
+    document.getElementById('loading').innerHTML = `
+      <div style="text-align:center;padding:24px">
+        <div style="font-size:36px;margin-bottom:12px">⚠️</div>
+        <div style="font-weight:700;margin-bottom:8px">Erro de conexão</div>
+        <div style="font-size:13px;color:var(--mu2);margin-bottom:16px">${e.message||'Verifique sua internet'}</div>
+        <button class="btn bg2" onclick="location.reload()" style="width:auto;padding:10px 20px">↺ Tentar novamente</button>
+      </div>`;
+  }
+}
+
+// ─── CADASTRO ──────────────────────────────────────────────────
+async function doCad() {
+  const nomeEl = document.getElementById('c-nome');
+  const telEl = document.getElementById('c-tel');
+  const emailEl = document.getElementById('c-email');
+  const btnEl = document.getElementById('btn-cad');
+
+  if (!nomeEl || !telEl || !btnEl) return;
+
+  const nome = nomeEl.value.trim();
+  const tel = telEl.value.trim().replace(/\D/g, '');
+  const email = emailEl ? emailEl.value.trim() : '';
+
+  if (!nome) { toast('Preencha seu nome!', 'te'); return; }
+  if (!tel || tel.length < 10) { toast('WhatsApp inválido! Use DDD + número', 'te'); return; }
+
+  btnEl.disabled = true;
+  btnEl.textContent = 'Aguarde...';
+
+  try {
+    // Verificar se já existe com MESMO nome E telefone
+    let jog = CACHE.jogs.find(j => j.tel === tel && j.nome.toLowerCase() === nome.toLowerCase());
+
+    if (!jog) {
+      // Novo jogador (mesmo telefone com nome diferente = aposta diferente, permitido!)
+      const data = { nome, tel, email: email || '', gid: null, obs: '', status: 'ativo', desde: Date.now() };
+      const id = await fbAdd('jogadores', data);
+      jog = { id, ...data };
+      CACHE.jogs.push(jog);
+    } else {
+      // Mesmo nome e telefone — atualizar
+      jog.nome = nome;
+      jog.status = 'ativo';
+      await fbUpdate('jogadores', jog.id, { nome, status: 'ativo' });
+    }
+
+    EU = jog;
+    localStorage.setItem('mg_eu', EU.id);
+
+    // Já tem aposta?
+    const apostaExist = CACHE.apostas.find(a => a.jog === EU.id);
+    if (apostaExist) {
+      // Atualiza gid do EU caso tenha mudado
+      EU.gid = apostaExist.gid;
+      go('s-conf');
+      btnEl.disabled = false;
+      btnEl.textContent = '→ Próximo: Escolher Números';
+      return;
+    }
+
+    // Jogador novo sem aposta — mostra grupos SEMPRE
+    if (CACHE.grupos.length > 1) {
+      renderGSel();
+      const gselWrap = document.getElementById('gsel-wrap');
+      if (gselWrap) gselWrap.style.display = 'block';
+      btnEl.disabled = false;
+      btnEl.textContent = '→ Próximo: Escolher Números';
+      return;
+    }
+
+    // Aviso de atraso
+    const lider = getLider();
+    const atrasoAviso = document.getElementById('atraso-aviso');
+    const atrasoTxt = document.getElementById('atraso-txt');
+    if (lider && lider.pts > 0 && atrasoAviso && atrasoTxt) {
+      atrasoAviso.style.display = 'block';
+      const meta = CACHE.cfg.meta || 10;
+      const faltam = meta - lider.pts;
+      atrasoTxt.textContent = `⚠️ O campeonato já começou! O líder tem ${lider.pts} pts e ainda faltam ${faltam} pts para ganhar. Você entra com 0 pts mas ainda pode virar! 🔥 Qualquer número sorteado pode mudar tudo!`;
+    }
+
+    // Mostrar grupos ou ir direto
+    if (CACHE.grupos.length === 1) {
+      await atribuirGrupo(CACHE.grupos[0].id);
+      buildGrid();
+      go('s-nums');
+    } else {
+      renderGSel();
+      const gselWrap = document.getElementById('gsel-wrap');
+      if (gselWrap) gselWrap.style.display = 'block';
+    }
+
+  } catch(e) {
+    console.error('Erro cadastro:', e);
+    toast('Erro ao cadastrar: ' + (e.message || 'verifique sua internet!'), 'te');
+  }
+
+  btnEl.disabled = false;
+  btnEl.textContent = '→ Próximo: Escolher Números';
+}
+
+// ─── GRUPOS ────────────────────────────────────────────────────
+function renderGSel() {
+  const list = document.getElementById('gsel-list');
+  if (!list) return;
+  list.innerHTML = CACHE.grupos.map(g => {
+    const cheio = (g.jogadores || []).length >= (g.max || CACHE.cfg.max || 30);
+    const pct = Math.min(100, Math.round((g.jogadores || []).length / (g.max || CACHE.cfg.max || 30) * 100));
+    const val = g.val || CACHE.cfg.val || 50;
+    return `<div class="gcard" id="gcard-${g.id}" style="${cheio ? 'opacity:.55;cursor:default' : 'cursor:pointer'}" onclick="${cheio ? "toast('Grupo cheio!','te')" : `selecionarGrupo('${g.id}')`}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+        <div style="font-weight:800;font-size:15px">${g.nome}</div>
+        ${cheio ? '<span class="bdg bvm">CHEIO</span>' : ''}
+      </div>
+      <div style="background:rgba(0,170,255,.08);border:1px solid rgba(0,170,255,.15);border-radius:10px;padding:10px 12px;margin-bottom:9px;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:10px;color:var(--mu2);text-transform:uppercase;letter-spacing:.5px">${(g.tipo||'semanal')==='unico'?'Pagamento único':'Valor por semana'}</div>
+          <div style="font-family:'Bebas Neue';font-size:30px;color:var(--green);line-height:1.1">R$ ${val}</div>
+          <div style="font-size:11px;color:var(--mu2)">via PIX</div>
+        </div>
+        <div style="font-size:32px">💰</div>
+      </div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:9px">
+        <span class="bdg bvd">👥 ${(g.jogadores||[]).length}/${g.max||CACHE.cfg.max||30} vagas</span>
+        <span class="bdg bvg">🎲 ${g.qtd||6} números</span>
+        <span class="bdg bvd">🎯 Meta: ${g.meta||CACHE.cfg.meta||10} pts</span>
+      </div>
+      <div class="pgbar"><div class="pgfill" style="width:${pct}%"></div></div>
+      ${!cheio ? `<div style="margin-top:8px;text-align:center;font-size:12px;font-weight:700;color:var(--green)">👆 Toque para participar</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+async function selecionarGrupo(gid) {
+  const el = document.getElementById('gcard-' + gid);
+  if (el) { el.style.opacity = '.5'; el.style.pointerEvents = 'none'; }
+  try {
+    await atribuirGrupo(gid);
+    buildGrid();
+    go('s-nums');
+  } catch(e) {
+    toast('Erro ao selecionar grupo!', 'te');
+    if (el) { el.style.opacity = '1'; el.style.pointerEvents = 'auto'; }
+  }
+}
+
+async function atribuirGrupo(gid) {
+  const g = CACHE.grupos.find(x => x.id === gid);
+  if (!g || !EU) return;
+  EU.gid = gid;
+  await fbUpdate('jogadores', EU.id, { gid });
+  if (!(g.jogadores || []).includes(EU.id)) {
+    if (!g.jogadores) g.jogadores = [];
+    g.jogadores.push(EU.id);
+    await fbUpdate('grupos', gid, { jogadores: g.jogadores });
+  }
+}
+
+// ─── NÚMEROS ───────────────────────────────────────────────────
+function getQtdNums() {
+  if (!EU || !EU.gid) return 6;
+  const g = CACHE.grupos.find(x => x.id === EU.gid);
+  return g?.qtd || 6;
+}
+
+function buildGrid() {
+  BOLAS = [];
+  const grid = document.getElementById('n-grid');
+  if (!grid) return;
+  const qtd = getQtdNums();
+  // Update header
+  const hs = document.querySelector('#s-nums .hs');
+  if (hs) hs.textContent = `Passo 2 de 3 — Escolha ${qtd} números`;
+  let h = '';
+  for (let i = 1; i <= 80; i++) {
+    h += `<div class="nball" id="nb${i}" onclick="togNum(${i})">${String(i).padStart(2,'0')}</div>`;
+  }
+  grid.innerHTML = h;
+  updGrid();
+}
+
+function togNum(n) {
+  if (BOLAS.includes(n)) {
+    BOLAS = BOLAS.filter(x => x !== n);
+    const el = document.getElementById('nb' + n);
+    if (el) el.classList.remove('sel');
+  } else {
+    const maxNums = getQtdNums();
+    if (BOLAS.length >= maxNums) { toast(`Só ${maxNums} números!`, 'te'); return; }
+    BOLAS.push(n);
+    const el = document.getElementById('nb' + n);
+    if (el) el.classList.add('sel');
+  }
+  updGrid();
+}
+
+function clearNums() {
+  BOLAS.forEach(n => {
+    const el = document.getElementById('nb' + n);
+    if (el) el.classList.remove('sel');
+  });
+  BOLAS = [];
+  updGrid();
+}
+
+function updGrid() {
+  const ct = document.getElementById('n-ct');
+  const sel = document.getElementById('n-sel');
+  const btn = document.getElementById('btn-nums');
+  const qtdAtual = getQtdNums();
+  if (ct) ct.textContent = BOLAS.length + '/' + qtdAtual;
+  if (sel) {
+    const s = [...BOLAS].sort((a, b) => a - b);
+    sel.innerHTML = BOLAS.length
+      ? s.map(n => `<div class="snb">${String(n).padStart(2,'0')}</div>`).join('')
+      : '<span style="font-size:12px;color:var(--mu)">Nenhum número selecionado</span>';
+  }
+  if (btn) btn.disabled = BOLAS.length < getQtdNums();
+}
+
+async function salvarAposta() {
+  const qtdNecessaria = getQtdNums();
+  if (BOLAS.length < qtdNecessaria) { toast(`Escolha ${qtdNecessaria} números!`, 'te'); return; }
+  if (!EU) { toast('Faça o cadastro primeiro!', 'te'); return; }
+
+  const btn = document.getElementById('btn-nums');
+  if (btn) { btn.disabled = true; btn.textContent = 'Salvando...'; }
+
+  try {
+    // Verificar se já tem aposta
+    const jatem = CACHE.apostas.find(a => a.jog === EU.id);
+    if (jatem) { toast('Você já tem seus números!', 'ti'); go('s-conf'); return; }
+
+    const nova = { jog: EU.id, nome: EU.nome, gid: EU.gid, nums: [...BOLAS].sort((a,b) => a-b), pago: false, ts: Date.now() };
+    const id = await fbAdd('apostas', nova);
+    CACHE.apostas.push({ id, ...nova });
+
+    // Montar tela de PIX
+    const g = CACHE.grupos.find(x => x.id === EU.gid);
+    const val = g?.val || CACHE.cfg.val || 50;
+    const pixVal = document.getElementById('pix-val');
+    const pixVal2 = document.getElementById('pix-val2');
+    const pixKey = document.getElementById('pix-key');
+    if (pixVal) pixVal.textContent = `R$ ${val},00`;
+    if (pixVal2) pixVal2.textContent = `R$ ${val},00`;
+    if (pixKey) pixKey.textContent = CACHE.cfg.pix || 'Configure no painel admin';
+
+    go('s-pix');
+    toast('Números salvos! Faça o PIX para ativar sua aposta ✓');
+  } catch(e) {
+    console.error('Erro salvar aposta:', e);
+    toast('Erro ao salvar: ' + (e.message || 'verifique sua internet!'), 'te');
+  }
+
+  if (btn) { btn.disabled = false; btn.textContent = '→ Próximo: Pagamento'; }
+}
+
+function copiarPix() {
+  const key = document.getElementById('pix-key');
+  if (!key) return;
+  navigator.clipboard?.writeText(key.textContent).catch(() => {});
+  toast('Chave PIX copiada! ✓');
+}
+
+// ─── MEU JOGO ──────────────────────────────────────────────────
+function montarConf() {
+  if (!EU) { go('s-home'); return; }
+  const aposta = CACHE.apostas.find(a => a.jog === EU.id);
+  const g = CACHE.grupos.find(x => x.id === EU.gid);
+  const pts = calcPts(EU.id);
+
+  const sub = document.getElementById('conf-sub');
+  const status = document.getElementById('conf-status');
+  const nums = document.getElementById('conf-nums');
+  const ptsEl = document.getElementById('conf-pts');
+  const grupo = document.getElementById('conf-grupo');
+  const mlbl = document.getElementById('conf-mlbl');
+
+  if (sub) sub.textContent = `Olá, ${EU.nome}!`;
+  if (status) {
+    if (!aposta) { status.textContent = 'Sem aposta'; status.style.color = 'var(--red)'; }
+    else if (aposta.pago) { status.textContent = '✅ ATIVO'; status.style.color = 'var(--green)'; }
+    else { status.textContent = '⏳ Aguardando pagamento'; status.style.color = 'var(--gold)'; }
+  }
+  if (nums) {
+    nums.innerHTML = aposta
+      ? aposta.nums.map(n => `<div class="cnb">${String(n).padStart(2,'0')}</div>`).join('')
+      : '<span style="color:var(--mu2);font-size:13px">Sem números cadastrados</span>';
+  }
+  if (ptsEl) ptsEl.textContent = (aposta && aposta.pago) ? pts + ' pts' : '— pts';
+  if (grupo) grupo.textContent = g ? g.nome : '—';
+  if (mlbl) mlbl.textContent = (aposta && aposta.pago) ? `${pts}/${CACHE.cfg.meta || 10} pts para ganhar` : '⏳ Aguardando confirmação do pagamento pelo administrador';
+}
+
+// ─── RANKING ───────────────────────────────────────────────────
+function calcPremio() {
+  // Usa grupo atual do ranking ou soma geral
+  const g = CACHE.grupos.find(x => x.id === GRUPO_RANK_ID) || CACHE.grupos[0];
+  return calcPremioGrupo(g);
+}
+
+function calcPremioGrupo(g) {
+  if (!g) return { bruto: 0, liquido: 0, p1: 0, p2: 0, p3: 0, pagos: 0, total: 0 };
+  const apostasGrupo = CACHE.apostas.filter(a => a.gid === g.id);
+  const pagos = apostasGrupo.filter(a => a.pago).length;
+  const total = apostasGrupo.length;
+  // Usa premioAcumulado do GRUPO — cada grupo tem o seu próprio!
+  // Se o grupo ainda não tem premioAcumulado próprio, usa só o do grupo (não mistura com outros)
+  const bruto = g.premioAcumulado || 0;
+  const com = (g.com || CACHE.cfg.com || 20) / 100;
+  return {
+    bruto,
+    liquido: bruto * (1 - com),
+    p1: bruto * (1 - com) * 0.6,
+    p2: bruto * (1 - com) * 0.3,
+    p3: bruto * (1 - com) * 0.1,
+    pagos,
+    total
+  };
+}
+
+function renderRanking() {
+  const body = document.getElementById('rk-body');
+  const premioEl = document.getElementById('rk-premio');
+  if (!body) return;
+
+  // Seletor de grupos
+  const grpSel = document.getElementById('rk-grp-sel');
+  if (grpSel) {
+    if (CACHE.grupos.length > 1) {
+      // Se jogador está logado, vai para o grupo dele por padrão
+      if (!GRUPO_RANK_ID) {
+        if (EU && EU.gid) {
+          GRUPO_RANK_ID = EU.gid;
+        } else {
+          GRUPO_RANK_ID = CACHE.grupos[0].id;
+        }
+      }
+      grpSel.style.display = 'flex';
+      grpSel.style.gap = '8px';
+      grpSel.style.flexWrap = 'wrap';
+      grpSel.style.padding = '0 0 8px 0';
+      // Mostra todos os grupos — jogador pode ver qualquer um
+      // Mas destaca o grupo do jogador logado
+      grpSel.innerHTML = CACHE.grupos.map(g => {
+        const euNeste = EU && CACHE.apostas.find(a => a.jog === EU.id && a.gid === g.id);
+        const ativo = GRUPO_RANK_ID === g.id;
+        return `<button onclick="GRUPO_RANK_ID='${g.id}';renderRanking()" style="
+          padding:10px 16px;border-radius:20px;border:2px solid ${ativo?'var(--green)':euNeste?'rgba(255,193,7,.4)':'rgba(255,255,255,.15)'};
+          cursor:pointer;font-weight:800;font-size:13px;
+          background:${ativo?'linear-gradient(135deg,var(--green),var(--gd))':euNeste?'rgba(255,193,7,.1)':'rgba(255,255,255,.06)'};
+          color:${ativo?'#000':'#fff'};
+          transition:.2s">${euNeste?'⭐ ':''} ${g.nome}<br><span style="font-size:11px;font-weight:600">R$ ${g.val || CACHE.cfg.val || 25}</span></button>`;
+      }).join('');
+    } else {
+      GRUPO_RANK_ID = CACHE.grupos[0]?.id || null;
+      grpSel.style.display = 'none';
+      grpSel.innerHTML = '';
+    }
+  }
+
+  // Filtrar jogadores do grupo selecionado
+  const grupoAtual = CACHE.grupos.find(g => g.id === GRUPO_RANK_ID) || CACHE.grupos[0];
+
+  // Pegar último sorteio para mostrar acertos
+  const ultimoRes = CACHE.res.length ? [...CACHE.res].sort((a,b) => b.ts - a.ts)[0] : null;
+
+  // Prêmio do grupo atual
+  const p = calcPremioGrupo(grupoAtual);
+  if (premioEl) {
+    premioEl.innerHTML = `
+      <div style="background:linear-gradient(135deg,rgba(255,193,7,.15),rgba(255,143,0,.08));border:1px solid rgba(255,193,7,.3);border-radius:15px;padding:14px;margin-bottom:4px">
+        <div style="text-align:center;margin-bottom:10px">
+          <div style="font-size:11px;color:var(--mu2);text-transform:uppercase;letter-spacing:1px">💰 Prêmio Total Estimado</div>
+          <div style="font-family:'Bebas Neue';font-size:42px;color:var(--gold);line-height:1.1">R$ ${p.liquido.toFixed(0)}</div>
+          <div style="font-size:11px;color:var(--mu2)">${p.total} apostas · ${p.pagos} pagos</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;text-align:center">
+          <div style="background:rgba(255,193,7,.1);border-radius:10px;padding:8px">
+            <div style="font-size:16px">🥇</div>
+            <div style="font-family:'Bebas Neue';font-size:18px;color:var(--gold)">R$ ${p.p1.toFixed(0)}</div>
+            <div style="font-size:10px;color:var(--mu2)">1º lugar</div>
+          </div>
+          <div style="background:rgba(255,193,7,.08);border-radius:10px;padding:8px">
+            <div style="font-size:16px">🥈</div>
+            <div style="font-family:'Bebas Neue';font-size:18px;color:var(--mu2)">R$ ${p.p2.toFixed(0)}</div>
+            <div style="font-size:10px;color:var(--mu2)">2º lugar</div>
+          </div>
+          <div style="background:rgba(255,193,7,.06);border-radius:10px;padding:8px">
+            <div style="font-size:16px">🥉</div>
+            <div style="font-family:'Bebas Neue';font-size:18px;color:var(--mu2)">R$ ${p.p3.toFixed(0)}</div>
+            <div style="font-size:10px;color:var(--mu2)">Menos pts (pagos)</div>
+          </div>
+        </div>
+      </div>
+      ${ultimoRes ? `
+      <div style="background:rgba(0,170,255,.08);border:1px solid rgba(0,170,255,.25);border-radius:12px;padding:12px;margin-bottom:4px">
+        <div style="font-size:11px;color:var(--mu2);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">🎲 Último Resultado — ${new Date(ultimoRes.ts).toLocaleDateString('pt-BR', {weekday:'long', day:'2-digit', month:'2-digit'})}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center">
+          ${ultimoRes.nums.map(n => `<div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#00aaff,#0077cc);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:15px;color:#000;font-weight:800">${String(n).padStart(2,'0')}</div>`).join('')}
+        </div>
+      </div>` : ''}`;
+  }
+
+  // Filtrar só jogadores do grupo atual
+  const jogComPts = CACHE.jogs
+    .filter(j => {
+      const ap = CACHE.apostas.find(a => a.jog === j.id);
+      return ap && ap.gid === (grupoAtual?.id || GRUPO_RANK_ID);
+    })
+    .map(j => ({ ...j, pts: calcPts(j.id) }))
+    .sort((a, b) => b.pts - a.pts);
+
+  if (!jogComPts.length) {
+    body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--mu2)">Nenhum jogador ainda</div>';
+    return;
+  }
+
+  // 3º lugar: jogador PAGO com MENOS pontos (mínimo 2 pagos para ter 3º)
+  const pagoComPts = jogComPts.filter(j => {
+    const ap = CACHE.apostas.find(a => a.jog === j.id);
+    return ap && ap.pago;
+  });
+  const terceiroPremiadoId = pagoComPts.length >= 3 ? pagoComPts[pagoComPts.length - 1].id : null;
+
+  const meta = grupoAtual?.meta || CACHE.cfg.meta || 10;
+  const emojis = ['🥇', '🥈', '🥉'];
+
+  body.innerHTML = jogComPts.map((j, i) => {
+    const aposta = CACHE.apostas.find(a => a.jog === j.id);
+    const nums = aposta?.nums || [];
+    const acertos = ultimoRes ? nums.filter(n => ultimoRes.nums.includes(n)) : [];
+    const pct = Math.min(100, Math.round(j.pts / meta * 100));
+    const isEu = EU && j.id === EU.id;
+    const isTerceiroPremio = j.id === terceiroPremiadoId;
+    const isPago = aposta && aposta.pago;
+    const pagoIndex = isPago ? pagoComPts.findIndex(p => p.id === j.id) : -1;
+    let posLabel;
+    if (isTerceiroPremio) posLabel = '🥉';
+    else if (isPago && pagoIndex === 0) posLabel = '🥇';
+    else if (isPago && pagoIndex === 1) posLabel = '🥈';
+    else posLabel = (i + 1);
+
+    // Números com destaque nos acertos
+    const numsHtml = nums.map(n => {
+      const acertou = acertos.includes(n);
+      return `<div style="width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:13px;
+        background:${acertou ? 'linear-gradient(135deg,#00aaff,#0055aa)' : 'rgba(255,255,255,.08)'};
+        color:${acertou ? '#fff' : 'var(--mu2)'};
+        border:1px solid ${acertou ? '#00aaff' : 'rgba(255,255,255,.15)'};
+        ${acertou ? 'box-shadow:0 2px 8px rgba(0,170,255,.4)' : ''}">${String(n).padStart(2,'0')}</div>`;
+    }).join('');
+
+    return `<div class="rk-item" style="flex-direction:column;align-items:stretch;${isEu ? 'border-color:#00aaff' : ''}${isTerceiroPremio ? ';border-color:#00aaff' : ''}">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div class="rk-pos">${posLabel}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:14px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+            ${j.nome} ${isEu ? '<span class="bdg bvd">Você</span>' : ''}
+            ${isTerceiroPremio ? '<span class="bdg bvg">🥉 Menor pts</span>' : ''}
+            ${acertos.length ? `<span class="bdg bvg">+${acertos.length} acerto${acertos.length>1?'s':''} ✨</span>` : ''}
+          </div>
+          <div style="margin-top:4px"><div class="rk-bar" style="width:${pct}%"></div></div>
+          <div style="font-size:11px;color:var(--mu2);margin-top:2px">${j.pts}/${meta} pts</div>
+        </div>
+        <div style="font-family:'Bebas Neue';font-size:28px;color:var(--green)">${j.pts}</div>
+      </div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap">${numsHtml}</div>
+    </div>`;
+  }).join('');
+}
+
+// ─── PONTOS ────────────────────────────────────────────────────
+function calcPts(jogId) {
+  const aposta = CACHE.apostas.find(a => a.jog === jogId);
+  if (!aposta || !aposta.nums) return 0;
+  // Jogador só pontua nos sorteios APÓS sua data de cadastro (aposta.ts)
+  const desde = aposta.ts || 0;
+  return CACHE.res.reduce((pts, r) => {
+    if (!r.nums) return pts;
+    if (r.ts < desde) return pts; // ignora sorteios anteriores ao cadastro
+    return pts + aposta.nums.filter(n => r.nums.includes(n)).length;
+  }, 0);
+}
+
+function getLider() {
+  if (!CACHE.jogs.length) return null;
+  return CACHE.jogs
+    .map(j => ({ ...j, pts: calcPts(j.id) }))
+    .sort((a, b) => b.pts - a.pts)[0] || null;
+}
+
+// ─── COUNTDOWN ─────────────────────────────────────────────────
+function iniciarCountdown() {
+  if (cdTimer) clearInterval(cdTimer);
+  cdTimer = setInterval(atualizarCountdown, 1000);
+  atualizarCountdown();
+}
+
+function atualizarCountdown() {
+  const agora = new Date();
+  const dia = agora.getDay(); // 0=Dom,1=Seg,2=Ter,3=Qua,4=Qui,5=Sex,6=Sab
+  const sorteios = [1, 2, 3, 4, 5, 6]; // Seg, Ter, Qua, Qui, Sex, Sab
+  let proximoSorteio = null;
+  let diasParaProximo = 7;
+
+  for (let d of sorteios) {
+    let diff = d - dia;
+    if (diff < 0) diff += 7;
+    if (diff === 0 && agora.getHours() >= 20) diff = 7;
+    if (diff < diasParaProximo) {
+      diasParaProximo = diff;
+      const alvo = new Date(agora);
+      alvo.setDate(agora.getDate() + diff);
+      alvo.setHours(20, 0, 0, 0);
+      proximoSorteio = alvo;
+    }
+  }
+
+  if (!proximoSorteio) return;
+
+  const diff = proximoSorteio - agora;
+  if (diff <= 0) { atualizarCountdown(); return; }
+
+  const h = Math.floor(diff / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  const s = Math.floor((diff % 60000) / 1000);
+  const pad = n => String(n).padStart(2, '0');
+
+  const elTime = document.getElementById('cd-time');
+  const elDia = document.getElementById('cd-dia');
+  if (elTime) elTime.textContent = `${pad(h)}:${pad(m)}:${pad(s)}`;
+  if (elDia) elDia.textContent = proximoSorteio.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit' });
+}
+
+// ─── ADMIN ─────────────────────────────────────────────────────
+function admLogin() {
+  const pass = document.getElementById('adm-pass')?.value;
+  if (pass === (CACHE.cfg.pass || '1234')) {
+    go('s-adm');
+  } else {
+    toast('Senha incorreta!', 'te');
+  }
+}
+
+function admTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('on'));
+  document.getElementById('adm-' + tab)?.classList.add('on');
+  event.target.classList.add('on');
+  if (tab === 'dash') renderAdmDash();
+  if (tab === 'jogs') renderAdmJogs();
+  if (tab === 'grps') renderAdmGrps();
+  if (tab === 'res') renderAdmRes();
+  if (tab === 'fin') renderAdmFin();
+  if (tab === 'cfg') carregarCfg();
+}
+
+function renderAdm() {
+  renderAdmDash();
+}
+
+function renderAdmDash() {
+  const pagos = CACHE.apostas.filter(a => a.pago).length;
+  const pend = CACHE.apostas.filter(a => !a.pago).length;
+  const bruto = CACHE.cfg.premioAcumulado || 0;
+  const premio = bruto * (1 - (CACHE.cfg.com || 20) / 100);
+
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  set('d-jogs', CACHE.jogs.length);
+  set('d-grps', CACHE.grupos.length);
+  set('d-paid', pagos);
+  set('d-pend', pend);
+  set('d-premio', 'R$ ' + premio.toFixed(2).replace('.', ','));
+  set('d-semana', 'Semana ' + (CACHE.sem?.num || 1));
+
+  // Alertas
+  const meta = CACHE.cfg.meta || 10;
+  const alerta = CACHE.cfg.alerta || 2;
+  const alertas = CACHE.jogs
+    .map(j => ({ ...j, pts: calcPts(j.id) }))
+    .filter(j => j.pts >= meta - alerta && j.pts < meta);
+
+  const alertasEl = document.getElementById('d-alertas');
+  if (alertasEl) {
+    alertasEl.innerHTML = alertas.map(j =>
+      `<div class="cgold" style="font-size:13px">⚠️ <b>${j.nome}</b> está a ${meta - j.pts} ponto(s) de GANHAR!</div>`
+    ).join('');
+  }
+}
+
+function renderAdmJogs() {
+  const el = document.getElementById('adm-jl');
+  if (!el) return;
+
+  // Renderiza filtro de grupos
+  const filtroEl = document.getElementById('adm-jogs-filtro');
+  if (filtroEl && CACHE.grupos.length > 1) {
+    filtroEl.innerHTML = `
+      <button onclick="FILTRO_GRUPO_JOGS=null;renderAdmJogs()" style="
+        padding:8px 14px;border-radius:20px;border:none;cursor:pointer;font-weight:700;font-size:12px;
+        background:${FILTRO_GRUPO_JOGS===null?'linear-gradient(135deg,var(--green),var(--gd))':'rgba(255,255,255,.08)'};
+        color:${FILTRO_GRUPO_JOGS===null?'#000':'var(--mu2)'}">Todos</button>
+      ${CACHE.grupos.map(g => `
+        <button onclick="FILTRO_GRUPO_JOGS='${g.id}';renderAdmJogs()" style="
+          padding:8px 14px;border-radius:20px;border:none;cursor:pointer;font-weight:700;font-size:12px;
+          background:${FILTRO_GRUPO_JOGS===g.id?'linear-gradient(135deg,var(--green),var(--gd))':'rgba(255,255,255,.08)'};
+          color:${FILTRO_GRUPO_JOGS===g.id?'#000':'var(--mu2)'}">
+          ${g.nome} (R$${g.val || CACHE.cfg.val || 25})</button>`).join('')}`;
+  }
+
+  // Filtrar jogadores
+  const jogsFiltrados = FILTRO_GRUPO_JOGS
+    ? CACHE.jogs.filter(j => j.gid === FILTRO_GRUPO_JOGS)
+    : CACHE.jogs;
+
+  if (!jogsFiltrados.length) { el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--mu2)">Nenhum jogador neste grupo</div>'; return; }
+
+  el.innerHTML = jogsFiltrados.map(j => {
+    const aposta = CACHE.apostas.find(a => a.jog === j.id);
+    const g = CACHE.grupos.find(x => x.id === j.gid);
+    const pts = calcPts(j.id);
+    const telLimpo = (j.tel||'').replace(/\D/g,'');
+    const wppLink = `https://wa.me/55${telLimpo}`;
+    return `<div class="card" style="margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+        <div>
+          <div style="font-weight:800;font-size:15px">${j.nome}</div>
+          <a href="${wppLink}" target="_blank" style="display:inline-flex;align-items:center;gap:5px;margin-top:3px;background:rgba(0,170,255,.1);border:1px solid rgba(0,170,255,.2);border-radius:8px;padding:4px 10px;text-decoration:none;color:var(--green);font-size:12px;font-weight:700">
+            📱 ${j.tel} — Abrir WhatsApp
+          </a>
+          <div style="font-size:11px;color:var(--mu2);margin-top:4px">🗂 ${g?.nome || 'Sem grupo'}</div>
+        </div>
+        <span class="bdg ${j.status==='ativo'?'bvd':'bvm'}">${j.status==='ativo'?'🟢 Ativo':'🔴 Inativo'}</span>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+        ${aposta ? `<span class="bdg ${aposta.pago?'bvd':'bvg'}">${aposta.pago?'✅ Pago':'⏳ Pendente'}</span>` : '<span class="bdg bvm">Sem aposta</span>'}
+        <span class="bdg bvd">${pts} pts</span>
+        <span class="bdg" style="background:rgba(255,193,7,.15);color:var(--gold);border:1px solid rgba(255,193,7,.3)">💰 ${aposta?.semanasPagas||1}x semana(s) paga(s)</span>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${aposta && !aposta.pago ? `<button class="btn bg2" style="flex:1;padding:8px;font-size:12px" onclick="confirmarPag('${aposta.id}')">✅ Confirmar Pag.</button>` : ''}
+        ${j.status==='ativo' ? `<button class="btn bgh" style="flex:1;padding:8px;font-size:12px" onclick="inativarJog('${j.id}')">⏸ Inativar</button>` : `<button class="btn bgh" style="flex:1;padding:8px;font-size:12px" onclick="ativarJog('${j.id}')">▶ Reativar</button>`}
+        <button class="btn brd" style="flex:0 0 auto;padding:8px 12px;font-size:12px" onclick="excluirJog('${j.id}')">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Atualizar select do modal
+  const sel = document.getElementById('mj-g');
+  if (sel) sel.innerHTML = CACHE.grupos.map(g => `<option value="${g.id}">${g.nome}</option>`).join('');
+}
+
+async function novaSemanaPag() {
+  if (!confirm('Iniciar nova semana? Todos os jogadores voltarão para PENDENTE e você precisará confirmar os pagamentos novamente.')) return;
+  try {
+    const semAtual = (CACHE.sem?.num || 1) + 1;
+    // Coloca todos como pendente (só semanal)
+    for (const a of CACHE.apostas) {
+      const g = CACHE.grupos.find(x => x.id === a.gid);
+      const tipo = g?.tipo || 'semanal';
+      if (tipo === 'semanal') {
+        await fbUpdate('apostas', a.id, { pago: false });
+        a.pago = false;
+      }
+    }
+    // Atualiza semana
+    CACHE.sem = { num: semAtual, inicio: Date.now() };
+    await fbSet('config', 'semana', CACHE.sem);
+    toast('Nova semana iniciada! Semana ' + semAtual + ' 🔄');
+    renderAdmJogs();
+    renderAdmDash();
+  } catch(e) { toast('Erro!', 'te'); }
+}
+
+async function confirmarPag(apoId) {
+  try {
+    const a = CACHE.apostas.find(x => x.id === apoId);
+    const semanasPagas = (a?.semanasPagas || 0) + 1;
+    await fbUpdate('apostas', apoId, { pago: true, semanasPagas });
+    if (a) { a.pago = true; a.semanasPagas = semanasPagas; }
+    // Prêmio acumulado por GRUPO — só sobe, nunca desce!
+    const g = CACHE.grupos.find(x => x.id === a?.gid);
+    const val = g?.val || CACHE.cfg.val || 50;
+    if (g) {
+      g.premioAcumulado = (g.premioAcumulado || 0) + val;
+      await fbUpdate('grupos', g.id, { premioAcumulado: g.premioAcumulado });
+    }
+    // Mantém também o acumulado geral para compatibilidade
+    CACHE.cfg.premioAcumulado = (CACHE.cfg.premioAcumulado || 0) + val;
+    await fbSet('config', 'main', { premioAcumulado: CACHE.cfg.premioAcumulado });
+    toast('Pagamento confirmado! ✓ (Semana ' + semanasPagas + ')');
+    renderAdmJogs();
+    renderAdmDash();
+  } catch(e) { toast('Erro!', 'te'); }
+}
+
+async function inativarJog(jid) {
+  try {
+    await fbUpdate('jogadores', jid, { status: 'inativo' });
+    const j = CACHE.jogs.find(x => x.id === jid);
+    if (j) j.status = 'inativo';
+    toast('Jogador inativado');
+    renderAdmJogs();
+  } catch(e) { toast('Erro!', 'te'); }
+}
+
+async function ativarJog(jid) {
+  try {
+    await fbUpdate('jogadores', jid, { status: 'ativo' });
+    const j = CACHE.jogs.find(x => x.id === jid);
+    if (j) j.status = 'ativo';
+    toast('Jogador reativado! ✓');
+    renderAdmJogs();
+  } catch(e) { toast('Erro!', 'te'); }
+}
+
+async function excluirJog(jid) {
+  if (!confirm('Excluir jogador? Isso apaga apostas e dados vinculados!')) return;
+  try {
+    const aposVinc = CACHE.apostas.filter(a => a.jog === jid);
+    for (const a of aposVinc) await fbDelete('apostas', a.id);
+    CACHE.apostas = CACHE.apostas.filter(a => a.jog !== jid);
+    for (const g of CACHE.grupos) {
+      if ((g.jogadores || []).includes(jid)) {
+        g.jogadores = g.jogadores.filter(x => x !== jid);
+        await fbUpdate('grupos', g.id, { jogadores: g.jogadores });
+      }
+    }
+    await fbDelete('jogadores', jid);
+    CACHE.jogs = CACHE.jogs.filter(j => j.id !== jid);
+    toast('Jogador excluído');
+    renderAdmJogs();
+    renderAdmDash();
+  } catch(e) { toast('Erro!', 'te'); }
+}
+
+async function admCadJog() {
+  const nome = document.getElementById('mj-n')?.value.trim();
+  const tel = document.getElementById('mj-t')?.value.trim().replace(/\D/g,'');
+  const gid = document.getElementById('mj-g')?.value;
+  if (!nome || !tel) { toast('Preencha nome e WhatsApp!', 'te'); return; }
+  try {
+    const data = { nome, tel, email: '', gid, obs: '', status: 'ativo', desde: Date.now() };
+    const id = await fbAdd('jogadores', data);
+    CACHE.jogs.push({ id, ...data });
+    const g = CACHE.grupos.find(x => x.id === gid);
+    if (g) { if (!g.jogadores) g.jogadores = []; g.jogadores.push(id); await fbUpdate('grupos', gid, { jogadores: g.jogadores }); }
+    closeModal('m-mj');
+    toast('Jogador cadastrado! ✓');
+    renderAdmJogs();
+  } catch(e) { toast('Erro!', 'te'); }
+}
+
+function renderAdmGrps() {
+  const el = document.getElementById('adm-gl');
+  if (!el) return;
+  el.innerHTML = CACHE.grupos.map(g => `
+    <div class="card" style="margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+        <div style="font-weight:800;font-size:15px">${g.nome}</div>
+        <div style="font-family:'Bebas Neue';font-size:22px;color:var(--green)">R$ ${g.val || CACHE.cfg.val || 25}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;margin-bottom:10px">
+        <span class="bdg bvd">👥 ${(g.jogadores||[]).length}/${g.max||30} jogadores</span>
+        <span class="bdg bvg">🎲 ${g.qtd||6} números</span>
+        <span class="bdg bvd">🎯 Meta: ${g.meta||CACHE.cfg.meta||10} pts</span>
+        <span class="bdg ${(g.tipo||'semanal')==='unico'?'bvd':'bvg'}">${(g.tipo||'semanal')==='unico'?'1️⃣ Pagamento único':'🔄 Semanal'}</span>
+      </div>
+      <button class="btn brd" style="padding:8px;font-size:12px" onclick="excluirGrupo('${g.id}')">🗑 Excluir Grupo</button>
+    </div>`).join('');
+}
+
+async function criarGrupo() {
+  const nome = document.getElementById('ng-n')?.value.trim();
+  const val = parseFloat(document.getElementById('ng-v')?.value) || null;
+  const meta = parseInt(document.getElementById('ng-meta')?.value) || 10;
+  const qtd = parseInt(document.getElementById('ng-qtd')?.value) || 6;
+  const max = parseInt(document.getElementById('ng-m')?.value) || 30;
+  const com = parseFloat(document.getElementById('ng-c')?.value) || 20;
+  const tipo = document.getElementById('ng-tipo')?.value || 'semanal';
+  if (!nome) { toast('Preencha o nome do grupo!', 'te'); return; }
+  if (!val) { toast('Preencha o valor do grupo!', 'te'); return; }
+  try {
+    const data = { nome, val, meta, qtd, max, com, tipo, premioAcumulado: 0, jogadores: [], criado: Date.now() };
+    const id = await fbAdd('grupos', data);
+    CACHE.grupos.push({ id, ...data });
+    closeModal('m-grp');
+    toast('Grupo criado! ✓');
+    renderAdmGrps();
+  } catch(e) { toast('Erro!', 'te'); }
+}
+
+async function excluirGrupo(gid) {
+  const g = CACHE.grupos.find(x => x.id === gid);
+  if (!g) return;
+  const jogNeste = CACHE.jogs.filter(j => j.gid === gid);
+  if (jogNeste.length > 0) {
+    if (!confirm(`Este grupo tem ${jogNeste.length} jogador(es). Excluir mesmo assim? Os jogadores perderão o grupo.`)) return;
+  } else {
+    if (!confirm('Excluir grupo?')) return;
+  }
+  try {
+    await fbDelete('grupos', gid);
+    CACHE.grupos = CACHE.grupos.filter(x => x.id !== gid);
+    toast('Grupo excluído! ✓');
+    renderAdmGrps();
+  } catch(e) { toast('Erro ao excluir grupo!', 'te'); }
+}
+
+async function lancarResultado() {
+  const numsStr = document.getElementById('res-nums')?.value;
+  const data = document.getElementById('res-data')?.value;
+  const concurso = document.getElementById('res-conc')?.value || '';
+  if (!numsStr || !data) { toast('Preencha os números e a data!', 'te'); return; }
+  const nums = numsStr.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n) && n >= 1 && n <= 80);
+  if (nums.length < 5) { toast('Informe pelo menos 5 números válidos!', 'te'); return; }
+  try {
+    const novo = { nums, data, concurso, ts: Date.now() };
+    const id = await fbAdd('resultados', novo);
+    CACHE.res.push({ id, ...novo });
+    if (document.getElementById('res-nums')) document.getElementById('res-nums').value = '';
+    if (document.getElementById('res-conc')) document.getElementById('res-conc').value = '';
+    toast('Resultado lançado! ✓');
+    renderAdmRes();
+    renderAdmDash();
+  } catch(e) { toast('Erro!', 'te'); }
+}
+
+function renderAdmRes() {
+  const el = document.getElementById('adm-rl');
+  if (!el) return;
+  const sorted = [...CACHE.res].sort((a, b) => b.ts - a.ts);
+  el.innerHTML = sorted.slice(0, 10).map(r => `
+    <div class="card" style="margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+        <div style="font-size:12px;color:var(--mu2)">${new Date(r.ts).toLocaleDateString('pt-BR')}</div>
+        ${r.concurso ? `<div style="font-size:12px;font-weight:700;color:var(--gold)">🏆 Concurso ${r.concurso}</div>` : ''}
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">${r.nums.map(n => `<div class="ball-demo" style="width:32px;height:32px;font-size:13px">${String(n).padStart(2,'0')}</div>`).join('')}</div>
+    </div>`).join('');
+}
+
+function renderAdmFin() {
+  const el = document.getElementById('adm-fl');
+  if (!el) return;
+  const pagos = CACHE.apostas.filter(a => a.pago).length;
+  const bruto = CACHE.cfg.premioAcumulado || 0;
+  const com = bruto * (CACHE.cfg.com || 20) / 100;
+  const premio = bruto - com;
+
+  el.innerHTML = `
+    <div class="cg">
+      <div style="font-weight:800;margin-bottom:10px">💰 Resumo Financeiro</div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:var(--mu2)">Total arrecadado</span><span style="font-weight:700">R$ ${bruto.toFixed(2).replace('.',',')}</span></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:var(--mu2)">Comissão (${CACHE.cfg.com||20}%)</span><span style="font-weight:700;color:var(--gold)">R$ ${com.toFixed(2).replace('.',',')}</span></div>
+      <div style="display:flex;justify-content:space-between;border-top:1px solid var(--bo2);padding-top:8px;margin-top:4px"><span style="font-weight:700">💰 Prêmio total</span><span style="font-family:'Bebas Neue';font-size:22px;color:var(--green)">R$ ${premio.toFixed(2).replace('.',',')}</span></div>
+    </div>
+    <div class="card">
+      <div style="font-weight:800;margin-bottom:8px">Distribuição sugerida</div>
+      <div style="font-size:13px;display:flex;flex-direction:column;gap:6px">
+        <div style="display:flex;justify-content:space-between"><span>🥇 1º lugar (60%)</span><span style="color:var(--green);font-weight:700">R$ ${(premio*.6).toFixed(2).replace('.',',')}</span></div>
+        <div style="display:flex;justify-content:space-between"><span>🥈 2º lugar (30%)</span><span style="color:var(--green);font-weight:700">R$ ${(premio*.3).toFixed(2).replace('.',',')}</span></div>
+        <div style="display:flex;justify-content:space-between"><span>🥉 Menor pts (10%)</span><span style="color:var(--green);font-weight:700">R$ ${(premio*.1).toFixed(2).replace('.',',')}</span></div>
+      </div>
+    </div>`;
+}
+
+function carregarCfg() {
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+  set('cfg-pix', CACHE.cfg.pix);
+  set('cfg-org', CACHE.cfg.org);
+  set('cfg-wpp', CACHE.cfg.wpp);
+  set('cfg-val', CACHE.cfg.val);
+  set('cfg-max', CACHE.cfg.max);
+  set('cfg-alerta', CACHE.cfg.alerta);
+  set('cfg-pass', CACHE.cfg.pass);
+  const meta = document.getElementById('cfg-meta');
+  if (meta) meta.value = CACHE.cfg.meta || 10;
+}
+
+async function salvarCfg() {
+  const get = id => { const el = document.getElementById(id); return el ? el.value : ''; };
+  CACHE.cfg.pix = get('cfg-pix');
+  CACHE.cfg.org = get('cfg-org');
+  CACHE.cfg.wpp = get('cfg-wpp');
+  CACHE.cfg.val = parseFloat(get('cfg-val')) || 50;
+  CACHE.cfg.meta = parseInt(get('cfg-meta')) || 10;
+  CACHE.cfg.max = parseInt(get('cfg-max')) || 30;
+  CACHE.cfg.alerta = parseInt(get('cfg-alerta')) || 2;
+  CACHE.cfg.pass = get('cfg-pass') || '1234';
+  try {
+    await fbSet('config', 'main', CACHE.cfg);
+    toast('Configurações salvas! ✓');
+  } catch(e) { toast('Erro ao salvar!', 'te'); }
+}
+
+async function resetarPontos() {
+  if (!confirm('Zerar toda a pontuação? Isso apaga todos os resultados!')) return;
+  try {
+    for (const r of CACHE.res) await fbDelete('resultados', r.id);
+    CACHE.res = [];
+    toast('Pontuação zerada! ✓');
+    renderAdmDash();
+  } catch(e) { toast('Erro!', 'te'); }
+}
+
+async function resetarPagamentos() {
+  if (!confirm('Zerar todos os pagamentos?')) return;
+  try {
+    for (const a of CACHE.apostas) { await fbUpdate('apostas', a.id, { pago: false }); a.pago = false; }
+    toast('Pagamentos zerados! ✓');
+    renderAdmDash();
+  } catch(e) { toast('Erro!', 'te'); }
+}
+
+async function resetarTudo() {
+  if (!confirm('RESET COMPLETO? Isso apaga TUDO (jogadores, apostas, resultados)!')) return;
+  if (!confirm('Tem certeza? Esta ação não pode ser desfeita!')) return;
+  try {
+    for (const j of CACHE.jogs) await fbDelete('jogadores', j.id);
+    for (const a of CACHE.apostas) await fbDelete('apostas', a.id);
+    for (const r of CACHE.res) await fbDelete('resultados', r.id);
+    for (const g of CACHE.grupos) { await fbUpdate('grupos', g.id, { jogadores: [] }); g.jogadores = []; }
+    CACHE.jogs = []; CACHE.apostas = []; CACHE.res = [];
+    EU = null; localStorage.removeItem('mg_eu');
+    toast('Reset completo! ✓');
+    renderAdmDash();
+  } catch(e) { toast('Erro!', 'te'); }
+}
+
+async function encerrarCampeonato() {
+  if (!confirm('Encerrar o campeonato atual?')) return;
+  toast('Campeonato encerrado! ✓');
+}
+
+// ─── MODAIS ────────────────────────────────────────────────────
+function openModal(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.add('on');
+}
+
+function closeModal(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.remove('on');
+}
+
+// ─── START ─────────────────────────────────────────────────────
+window.addEventListener('load', init);
+</script>
+</body>
+</html>
